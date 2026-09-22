@@ -24,6 +24,7 @@ from jobspy.util import (
 )
 from jobspy.ziprecruiter import ZipRecruiter
 
+log = create_logger("ScrapeJobs")
 
 # Update the SCRAPER_MAPPING dictionary in the scrape_jobs function
 
@@ -55,6 +56,11 @@ def scrape_jobs(
 ) -> pd.DataFrame:
     """
     Scrapes job data from job boards concurrently
+    :param include_remote: run a second, remote-flagged query pass per board and
+        union the results. Malaysia only - the exact-dedup step that absorbs the
+        two passes' overlap runs only for country_indeed="malaysia", so this is a
+        no-op (a single pass, same as include_remote=False) for other countries
+        rather than returning doubled rows.
     :return: Pandas DataFrame containing job data
     """
     SCRAPER_MAPPING = {
@@ -120,10 +126,23 @@ def scrape_jobs(
     # to the same condition so the two can never come apart: issuing two passes
     # without the dedup behind them returns every listing twice.
     passes: list[ScraperInput] = [scraper_input]
-    if include_remote and not is_remote and country_enum == Country.MALAYSIA:
-        remote_input = scraper_input.model_copy(deep=True)
-        remote_input.is_remote = True
-        passes.append(remote_input)
+    if include_remote and not is_remote:
+        if country_enum == Country.MALAYSIA:
+            remote_input = scraper_input.model_copy(deep=True)
+            remote_input.is_remote = True
+            passes.append(remote_input)
+        else:
+            # A caller left include_remote at its default (or set it
+            # explicitly) but is not scraping Malaysia, where the only
+            # dedup that could absorb a second pass's overlap lives. Say
+            # so - a default-on parameter doing nothing must be
+            # observable, not just documented.
+            log.info(
+                f"include_remote=True has no effect for "
+                f"country_indeed={country_indeed!r}: the remote pass is "
+                f"Malaysia-only, so only the located pass ran. Pass "
+                f"include_remote=False to silence this."
+            )
 
     jobs_to_run = [
         (site, site_input) for site in scraper_input.site_type for site_input in passes

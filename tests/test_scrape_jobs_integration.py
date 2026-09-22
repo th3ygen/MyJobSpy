@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import logging
 
 import pytest
 
@@ -234,3 +235,113 @@ def test_non_malaysia_country_does_not_double_rows(monkeypatch, make_job):
 
     assert passes == [False]  # only the located pass ran
     assert len(df) == 1  # and therefore no doubling
+
+
+def test_include_remote_noop_is_logged_for_non_malaysia(monkeypatch, make_job, caplog):
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", OkScraper, raising=False)
+    # create_logger sets propagate=False, so caplog cannot see these records
+    # unless propagation is re-enabled for the duration of this test.
+    monkeypatch.setattr(jobspy.log, "propagate", True)
+    caplog.set_level(logging.INFO, logger="JobSpy:ScrapeJobs")
+
+    jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="usa",
+        include_remote=True,
+        results_wanted=1,
+        # set_logger_level(verbose) gates all JobSpy:* loggers at ERROR by
+        # default (verbose=0); raise it so the INFO no-op record is actually
+        # emitted, mirroring what a caller must do to see it.
+        verbose=2,
+    )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any("include_remote=True has no effect" in m for m in messages)
+
+
+def test_include_remote_noop_is_not_logged_for_malaysia(monkeypatch, make_job, caplog):
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", OkScraper, raising=False)
+    monkeypatch.setattr(jobspy.log, "propagate", True)
+    caplog.set_level(logging.INFO, logger="JobSpy:ScrapeJobs")
+
+    jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="malaysia",
+        include_remote=True,
+        results_wanted=1,
+        verbose=2,  # visibility on; absence below is the actual behavior, not suppression
+    )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert not any("include_remote=True has no effect" in m for m in messages)
+
+
+def test_include_remote_noop_is_not_logged_when_include_remote_false(
+    monkeypatch, make_job, caplog
+):
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", OkScraper, raising=False)
+    monkeypatch.setattr(jobspy.log, "propagate", True)
+    caplog.set_level(logging.INFO, logger="JobSpy:ScrapeJobs")
+
+    jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="usa",
+        include_remote=False,
+        results_wanted=1,
+        verbose=2,  # visibility on; absence below is the actual behavior, not suppression
+    )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert not any("include_remote=True has no effect" in m for m in messages)
+
+
+def test_include_remote_noop_is_not_logged_when_is_remote_already_set(
+    monkeypatch, make_job, caplog
+):
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", OkScraper, raising=False)
+    monkeypatch.setattr(jobspy.log, "propagate", True)
+    caplog.set_level(logging.INFO, logger="JobSpy:ScrapeJobs")
+
+    jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="usa",
+        is_remote=True,
+        include_remote=True,
+        results_wanted=1,
+        verbose=2,  # visibility on; absence below is the actual behavior, not suppression
+    )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert not any("include_remote=True has no effect" in m for m in messages)
