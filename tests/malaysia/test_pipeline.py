@@ -33,6 +33,54 @@ def test_normalizes_location_salary_and_remote(make_job):
     assert result.remote_scope == "my"
 
 
+def test_description_parsed_salary_reaches_the_frame_as_description(make_job):
+    """End to end over the real pipeline, not a hand-set marker: a salary
+    found only in the description must surface as salary_source
+    'description', because measuring description-parsed fill separately is
+    the point of Phase 1."""
+    from jobspy.frame import build_jobs_dataframe
+    from jobspy.model import JobResponse
+
+    job = make_job(
+        location=Location(city="Cyberjaya", country=Country.MALAYSIA),
+        description="We offer RM6,000 - RM8,000 per month.",
+    )
+
+    normalized = normalize([job])
+
+    df = build_jobs_dataframe(
+        {"indeed": JobResponse(jobs=normalized)}, country_enum=Country.MALAYSIA
+    )
+
+    assert df.iloc[0]["min_amount"] == 6000
+    assert df.iloc[0]["salary_source"] == "description"
+
+
+def test_structured_compensation_reaches_the_frame_as_direct_data(make_job):
+    from jobspy.frame import build_jobs_dataframe
+    from jobspy.model import Compensation, CompensationInterval, JobResponse
+
+    job = make_job(
+        description="RM9,000 per month",
+        compensation=Compensation(
+            interval=CompensationInterval.MONTHLY,
+            min_amount=4000,
+            max_amount=5000,
+            currency="MYR",
+        ),
+    )
+
+    normalized = normalize([job])
+
+    df = build_jobs_dataframe(
+        {"indeed": JobResponse(jobs=normalized)}, country_enum=Country.MALAYSIA
+    )
+
+    # Structured board data still wins, and still says so.
+    assert df.iloc[0]["min_amount"] == 4000
+    assert df.iloc[0]["salary_source"] == "direct_data"
+
+
 def test_does_not_overwrite_structured_compensation(make_job):
     from jobspy.model import Compensation, CompensationInterval
 

@@ -35,6 +35,9 @@ def _apply_salary(job: JobPost) -> None:
     parsed = parse_myr_salary(job.description)
     if parsed is not None:
         job.compensation = parsed
+        # Record provenance: the frame cannot tell a parsed figure from a
+        # board-supplied one by looking at `compensation` alone.
+        job.salary_parsed_from_description = True
 
 
 def _apply_remote(job: JobPost) -> None:

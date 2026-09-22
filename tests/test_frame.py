@@ -110,6 +110,64 @@ def test_enforce_annual_salary_converts_monthly_to_yearly(make_job):
     assert row["currency"] == "MYR"
 
 
+def test_malaysian_description_parsed_salary_reports_description_source(make_job):
+    """The Malaysian pipeline parses MYR salary out of description text and
+    writes it into job.compensation. The frame used to stamp any populated
+    compensation as direct_data, so a parsed figure was indistinguishable
+    from structured board data - which is the one number Phase 1 exists to
+    move."""
+    job = make_job(
+        compensation=Compensation(
+            interval=CompensationInterval.MONTHLY,
+            min_amount=6000,
+            max_amount=8000,
+            currency="MYR",
+        ),
+        salary_parsed_from_description=True,
+    )
+
+    df = build_jobs_dataframe(
+        {"indeed": JobResponse(jobs=[job])}, country_enum=Country.MALAYSIA
+    )
+
+    row = df.iloc[0]
+    assert row["min_amount"] == 6000
+    assert row["currency"] == "MYR"
+    assert row["salary_source"] == "description"
+
+
+def test_structured_board_salary_still_reports_direct_data(make_job):
+    job = make_job(
+        compensation=Compensation(
+            interval=CompensationInterval.MONTHLY,
+            min_amount=6000,
+            max_amount=8000,
+            currency="MYR",
+        ),
+    )
+
+    df = build_jobs_dataframe(
+        {"indeed": JobResponse(jobs=[job])}, country_enum=Country.MALAYSIA
+    )
+
+    assert df.iloc[0]["salary_source"] == "direct_data"
+
+
+def test_provenance_marker_is_not_leaked_as_a_column(make_job):
+    job = make_job(
+        compensation=Compensation(
+            interval=CompensationInterval.MONTHLY, min_amount=6000, currency="MYR"
+        ),
+        salary_parsed_from_description=True,
+    )
+
+    df = build_jobs_dataframe(
+        {"indeed": JobResponse(jobs=[job])}, country_enum=Country.MALAYSIA
+    )
+
+    assert "salary_parsed_from_description" not in df.columns
+
+
 def test_usa_extracts_salary_from_description_when_no_compensation(make_job):
     job = make_job(
         compensation=None,

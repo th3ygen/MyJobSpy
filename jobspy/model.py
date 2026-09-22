@@ -290,6 +290,17 @@ class JobPost(BaseModel):
     dedup_group: str | None = None  # shared by likely-duplicate listings
     remote_scope: str | None = None  # my | apac | global | other_country | unknown
 
+    # True when `compensation` was parsed out of the description text rather
+    # than supplied by the board. The pipeline writes parsed MYR salary into
+    # `compensation` like any other figure, so without this marker the
+    # DataFrame cannot tell the two apart and stamps everything
+    # SalarySource.DIRECT_DATA - which both misreports provenance and hides
+    # the description-parsed fill rate the Malaysia work exists to raise.
+    # Carried on the model rather than computed in the frame because only
+    # the pipeline knows where the number came from. Not part of
+    # `desired_order`, so it never becomes an output column.
+    salary_parsed_from_description: bool = False
+
 
 class JobResponse(BaseModel):
     jobs: list[JobPost] = []

@@ -44,7 +44,17 @@ def build_jobs_dataframe(
                 job_data["min_amount"] = compensation_obj.get("min_amount")
                 job_data["max_amount"] = compensation_obj.get("max_amount")
                 job_data["currency"] = compensation_obj.get("currency", "USD")
-                job_data["salary_source"] = SalarySource.DIRECT_DATA.value
+                # A populated `compensation` is not by itself evidence the
+                # board supplied the figure: the Malaysian pipeline writes
+                # description-parsed MYR salary into the same field. Trust
+                # the marker the pipeline sets, and default to direct_data
+                # for every other path (where nothing parses into
+                # `compensation`, so the board is the only source).
+                job_data["salary_source"] = (
+                    SalarySource.DESCRIPTION.value
+                    if job_data.get("salary_parsed_from_description")
+                    else SalarySource.DIRECT_DATA.value
+                )
                 if enforce_annual_salary and (
                     job_data["interval"]
                     and job_data["interval"] != "yearly"
