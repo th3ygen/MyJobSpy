@@ -48,6 +48,7 @@ def scrape_jobs(
     hours_old: int = None,
     enforce_annual_salary: bool = False,
     group_duplicates: bool = True,
+    include_remote: bool = True,
     verbose: int = 0,
     user_agent: str = None,
     **kwargs,
@@ -102,25 +103,34 @@ def scrape_jobs(
         hours_old=hours_old,
     )
 
-    def scrape_site(site: Site) -> Tuple[str, JobResponse]:
+    def scrape_site(site: Site, site_input: ScraperInput) -> Tuple[str, JobResponse]:
         scraper_class = SCRAPER_MAPPING[site]
         scraper = scraper_class(proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
-        scraped_data: JobResponse = scraper.scrape(scraper_input)
+        scraped_data: JobResponse = scraper.scrape(site_input)
         cap_name = site.value.capitalize()
-        site_name = "ZipRecruiter" if cap_name == "Zip_recruiter" else cap_name
-        site_name = "LinkedIn" if cap_name == "Linkedin" else cap_name
-        create_logger(site_name).info(f"finished scraping")
+        site_display = "ZipRecruiter" if cap_name == "Zip_recruiter" else cap_name
+        site_display = "LinkedIn" if cap_name == "Linkedin" else site_display
+        create_logger(site_display).info("finished scraping")
         return site.value, scraped_data
 
-    site_to_jobs_dict = {}
+    site_to_jobs_dict: dict[str, JobResponse] = {}
 
-    def worker(site):
-        site_val, scraped_info = scrape_site(site)
-        return site_val, scraped_info
+    # The located pass and the remote pass overlap heavily; exact dedup in the
+    # Malaysia pipeline absorbs the duplicates.
+    passes: list[ScraperInput] = [scraper_input]
+    if include_remote and not is_remote:
+        remote_input = scraper_input.model_copy(deep=True)
+        remote_input.is_remote = True
+        passes.append(remote_input)
+
+    jobs_to_run = [
+        (site, site_input) for site in scraper_input.site_type for site_input in passes
+    ]
 
     with ThreadPoolExecutor() as executor:
         future_to_site = {
-            executor.submit(worker, site): site for site in scraper_input.site_type
+            executor.submit(scrape_site, site, site_input): site
+            for site, site_input in jobs_to_run
         }
 
         for future in as_completed(future_to_site):
@@ -131,9 +141,10 @@ def scrape_jobs(
                 create_logger(site.value.capitalize()).error(
                     f"scrape failed, continuing without it: {exc}"
                 )
-                site_to_jobs_dict[site.value] = JobResponse(jobs=[])
+                site_to_jobs_dict.setdefault(site.value, JobResponse(jobs=[]))
                 continue
-            site_to_jobs_dict[site_value] = scraped_data
+            existing = site_to_jobs_dict.setdefault(site_value, JobResponse(jobs=[]))
+            existing.jobs.extend(scraped_data.jobs)
 
     if country_enum == Country.MALAYSIA:
         # Site attribution lives in the dict key, not on JobPost, so remember
