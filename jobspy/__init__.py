@@ -26,6 +26,10 @@ from jobspy.ziprecruiter import ZipRecruiter
 
 log = create_logger("ScrapeJobs")
 
+# Boards worth querying for a Malaysian search. The rest are inherited from
+# upstream and stay importable, but are not queried unless asked for by name.
+DEFAULT_SITES: list[Site] = [Site.INDEED, Site.LINKEDIN, Site.GOOGLE]
+
 # Update the SCRAPER_MAPPING dictionary in the scrape_jobs function
 
 
@@ -77,7 +81,7 @@ def scrape_jobs(
     job_type = get_enum_from_value(job_type) if job_type else None
 
     def get_site_type():
-        site_types = list(Site)
+        site_types = list(DEFAULT_SITES)
         if isinstance(site_name, str):
             site_types = [map_str_to_site(site_name)]
         elif isinstance(site_name, Site):
@@ -206,7 +210,4 @@ def scrape_jobs(
     )
 
 
-# Add BDJobs to __all__
-__all__ = [
-    "BDJobs",
-]
+__all__ = ["scrape_jobs", "DEFAULT_SITES"]

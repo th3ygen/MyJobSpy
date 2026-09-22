@@ -1,218 +1,235 @@
-<img src="https://github.com/cullenwatson/JobSpy/assets/78247585/ae185b7e-e444-4712-8bb9-fa97f53e896b" width="400">
+# MyJobSpy 🇲🇾
 
-**JobSpy** is a job scraping library with the goal of aggregating all the jobs from popular job boards with one tool.
+**MyJobSpy** is a job scraping library tailored for the **Malaysian** job market. It aggregates postings from multiple job boards into a single pandas DataFrame, with sensible defaults for Malaysian locations, currency, and search patterns.
+
+> Fork of [cullenwatson/JobSpy](https://github.com/cullenwatson/JobSpy) (MIT). Upstream targets the global/US market; this fork narrows the focus to Malaysia — MY-relevant scrapers, MY locations, MYR salaries, and local job boards.
 
 ## Features
 
-- Scrapes job postings from **LinkedIn**, **Indeed**, **Glassdoor**, **Google**, **ZipRecruiter**, & other job boards concurrently
-- Aggregates the job postings in a dataframe
-- Proxies support to bypass blocking
+- Scrapes **Indeed Malaysia**, **LinkedIn**, and **Google Jobs** concurrently by default — the five other upstream boards (Glassdoor, ZipRecruiter, Bayt, Naukri, BDJobs) are quarantined out of the default set but still work if named explicitly in `site_name`
+- Malaysian locations out of the box — Kuala Lumpur, Selangor, Penang, Johor, Cyberjaya, and more
+- Aggregates everything into one pandas DataFrame → CSV / Excel
+- Proxy support to work around rate limiting
 
-![jobspy](https://github.com/cullenwatson/JobSpy/assets/78247585/ec7ef355-05f6-4fd3-8161-a817e31c5c57)
+## Installation
 
-### Installation
+Not published to PyPI — install from this repo:
 
+```bash
+pip install git+https://github.com/th3ygen/MyJobSpy.git
 ```
-pip install -U python-jobspy
-```
 
-_Python version >= [3.10](https://www.python.org/downloads/release/python-3100/) required_
+_Requires Python >= [3.10](https://www.python.org/downloads/release/python-3100/)_
 
-### Usage
+## Usage
 
 ```python
 import csv
 from jobspy import scrape_jobs
 
 jobs = scrape_jobs(
-    site_name=["indeed", "linkedin", "zip_recruiter", "google"], # "glassdoor", "bayt", "naukri", "bdjobs"
+    site_name=["indeed", "linkedin", "google"],
     search_term="software engineer",
-    google_search_term="software engineer jobs near San Francisco, CA since yesterday",
-    location="San Francisco, CA",
+    google_search_term="software engineer jobs in Kuala Lumpur Malaysia since yesterday",
+    location="Kuala Lumpur, Malaysia",
+    country_indeed="malaysia",          # required for Indeed — routes to malaysia.indeed.com
     results_wanted=20,
     hours_old=72,
-    country_indeed='USA',
-    
-    # linkedin_fetch_description=True # gets more info such as description, direct job url (slower)
-    # proxies=["208.195.175.46:65095", "208.195.175.45:65095", "localhost"],
+
+    # linkedin_fetch_description=True   # full description + direct job url (slower)
+    # proxies=["user:pass@host:port", "localhost"],
 )
+
 print(f"Found {len(jobs)} jobs")
-print(jobs.head())
-jobs.to_csv("jobs.csv", quoting=csv.QUOTE_NONNUMERIC, escapechar="\\", index=False) # to_excel
+jobs.to_csv("jobs_my.csv", quoting=csv.QUOTE_NONNUMERIC, escapechar="\\", index=False)
 ```
 
-### Output
+### Common Malaysian locations
 
-```
-SITE           TITLE                             COMPANY           CITY          STATE  JOB_TYPE  INTERVAL  MIN_AMOUNT  MAX_AMOUNT  JOB_URL                                            DESCRIPTION
-indeed         Software Engineer                 AMERICAN SYSTEMS  Arlington     VA     None      yearly    200000      150000      https://www.indeed.com/viewjob?jk=5e409e577046...  THIS POSITION COMES WITH A 10K SIGNING BONUS!...
-indeed         Senior Software Engineer          TherapyNotes.com  Philadelphia  PA     fulltime  yearly    135000      110000      https://www.indeed.com/viewjob?jk=da39574a40cb...  About Us TherapyNotes is the national leader i...
-linkedin       Software Engineer - Early Career  Lockheed Martin   Sunnyvale     CA     fulltime  yearly    None        None        https://www.linkedin.com/jobs/view/3693012711      Description:By bringing together people that u...
-linkedin       Full-Stack Software Engineer      Rain              New York      NY     fulltime  yearly    None        None        https://www.linkedin.com/jobs/view/3696158877      Rain’s mission is to create the fastest and ea...
-zip_recruiter Software Engineer - New Grad       ZipRecruiter      Santa Monica  CA     fulltime  yearly    130000      150000      https://www.ziprecruiter.com/jobs/ziprecruiter...  We offer a hybrid work environment. Most US-ba...
-zip_recruiter Software Developer                 TEKsystems        Phoenix       AZ     fulltime  hourly    65          75          https://www.ziprecruiter.com/jobs/teksystems-0...  Top Skills' Details• 6 years of Java developme...
+`location` accepts any free-text place that the board itself understands:
 
-```
+| Klang Valley | Northern | Southern | East Coast / East Malaysia |
+|---|---|---|---|
+| Kuala Lumpur | Penang | Johor Bahru | Kuantan |
+| Petaling Jaya | George Town | Iskandar Puteri | Kota Kinabalu |
+| Cyberjaya | Ipoh | Melaka | Kuching |
+| Shah Alam | Alor Setar | Seremban | Kota Bharu |
+| Subang Jaya | Butterworth | Nusajaya | Miri |
 
-### Parameters for `scrape_jobs()`
+Use `location="Malaysia"` for a nationwide search, or add `is_remote=True` for remote-friendly roles.
+
+## Supported job boards
+
+| Board | Status | Notes |
+|---|---|---|
+| **Indeed** | ✅ Default | Uses `malaysia.indeed.com`. Requires `country_indeed="malaysia"`. No rate limiting. Returns real results, but no structured salary data — see caveats below. |
+| **LinkedIn** | ✅ Default | Searches globally via `location`. Heavily rate limited — proxies recommended. Returns real results, but no salary data and no description text unless `linkedin_fetch_description=True`. |
+| **Google** | ✅ Default | Filtered *only* by `google_search_term`. Needs very specific phrasing (see FAQ) — returned zero rows across every search tried during this project's measurements. |
+| Glassdoor | ⚠️ Quarantined | No Malaysian Glassdoor domain; falls back to `www.glassdoor.com` and returns US-centric results. Not in the default `site_name`; pass `site_name="glassdoor"` to use it anyway. |
+| ZipRecruiter | ❌ Quarantined | US/Canada only. Not in the default `site_name`; pass it explicitly to use it anyway. |
+| Bayt | ❌ Quarantined | Middle East / North Africa. Not in the default `site_name`; pass it explicitly to use it anyway. |
+| Naukri | ❌ Quarantined | India. Not in the default `site_name`; pass it explicitly to use it anyway. |
+| BDJobs | ❌ Quarantined | Bangladesh. Not in the default `site_name`; pass it explicitly to use it anyway. |
+
+The default `site_name` (used whenever the parameter is omitted) is `indeed`, `linkedin`, `google` — the three boards worth querying for a Malaysian search. The other five are inherited from upstream and left in the codebase, fully importable and usable, but are quarantined out of the default set: pass them by name (e.g. `site_name="bayt"` or `site_name=["indeed", "bayt"]`) to use them anyway.
+
+## Roadmap — Malaysian job boards
+
+None of the following are implemented yet. They are the intended direction of this fork:
+
+- [ ] **JobStreet Malaysia** (`my.jobstreet.com`) — the dominant MY board, highest priority
+- [ ] **Hiredly** (formerly WOBB) — startup / young-professional roles
+- [ ] **Maukerja** — Bahasa Malaysia listings, blue-collar & retail heavy
+- [ ] **Ricebowl** — SME and fresh-grad roles
+- [ ] **Glints Malaysia** — tech and startup roles
+- [ ] MYR salary parsing from job descriptions (see caveat below)
+- [ ] Bahasa Malaysia search-term handling (e.g. *jurutera*, *kerani*, *pemandu*)
+
+Contributions toward any of these are welcome.
+
+## Malaysia-specific caveats
+
+**Salary parsing.** Neither Indeed Malaysia nor LinkedIn returns structured salary data in practice — measured salary fill from direct board data was 0% across live listings. For `country_indeed="malaysia"`, salary is instead parsed out of the job's *description text* looking for MYR amounts (`RM 5,000 - RM 7,000`, `RM3k-5k`, `RM 25 sejam`, etc.); structured data from the board still wins when a board does provide it. This only works where a description is present: **LinkedIn does not fetch description text by default** (`linkedin_fetch_description=False`), so description-parsed salary is effectively Indeed-only unless you turn that flag on. `salary_source` on each row tells you whether the figure came from `direct_data` or was `description`-parsed.
+
+**`enforce_annual_salary=True`** converts monthly MYR figures to annual — useful since most Malaysian postings quote monthly pay.
+
+**Indeed state codes.** Indeed returns location state as an ISO 3166-2 code (`M14`, `M10`, `M07`, …) rather than a state name. The pipeline normalizes these to canonical Malaysian state names in the `state` output column.
+
+**Job types.** `job_type` accepts `fulltime`, `parttime`, `internship`, `contract`. Malaysian "permanent" roles map to `fulltime`.
+
+## Parameters for `scrape_jobs()`
 
 ```plaintext
 Optional
-├── site_name (list|str): 
-|    linkedin, zip_recruiter, indeed, glassdoor, google, bayt, bdjobs
-|    (default is all)
+├── site_name (list|str):
+|    defaults to indeed, linkedin, google when omitted (the MY-relevant boards)
+|    also available, but quarantined out of the default - pass explicitly:
+|    glassdoor, zip_recruiter, bayt, naukri, bdjobs
 │
 ├── search_term (str)
 |
 ├── google_search_term (str)
-|     search term for google jobs. This is the only param for filtering google jobs.
+|     search term for Google Jobs. This is the only param that filters Google results.
 │
-├── location (str)
+├── location (str): e.g. "Kuala Lumpur, Malaysia"
 │
-├── distance (int): 
-|    in miles, default 50
+├── country_indeed (str):
+|    controls which Indeed domain is used. Defaults to "malaysia"
+|    (routes to malaysia.indeed.com); the Malaysia normalization pipeline
+|    (dedup_group, remote_scope, state/city normalization, description
+|    salary parsing) only runs when this is "malaysia".
 │
-├── job_type (str): 
-|    fulltime, parttime, internship, contract
+├── distance (int): in miles, default 50
 │
-├── proxies (list): 
-|    in format ['user:pass@host:port', 'localhost']
-|    each job board scraper will round robin through the proxies
-|
+├── job_type (str): fulltime, parttime, internship, contract
+│
 ├── is_remote (bool)
 │
-├── results_wanted (int): 
-|    number of job results to retrieve for each site specified in 'site_name'
+├── include_remote (bool): default True.
+|    Malaysia only (country_indeed="malaysia"). Runs a second,
+|    remote-flagged search pass per board and unions it with the located
+|    pass; the exact-dedup step absorbs the overlap between the two. For
+|    any other country_indeed this is a no-op (a single, located-only
+|    pass) and a log line says so - a default-on parameter doing nothing
+|    must be observable, not just documented.
 │
-├── easy_apply (bool): 
-|    filters for jobs that are hosted on the job board site (LinkedIn easy apply filter no longer works)
-|
-├── user_agent (str): 
-|    override the default user agent which may be outdated
+├── results_wanted (int):
+|    number of results to retrieve per site in 'site_name'
 │
-├── description_format (str): 
-|    markdown, html (Format type of the job descriptions. Default is markdown.)
+├── hours_old (int):
+|    filters jobs by hours since posting
 │
-├── offset (int): 
-|    starts the search from an offset (e.g. 25 will start the search from the 25th result)
+├── offset (int):
+|    start the search from an offset (e.g. 25 starts at the 25th result)
 │
-├── hours_old (int): 
-|    filters jobs by the number of hours since the job was posted 
-|    (ZipRecruiter and Glassdoor round up to next day.)
+├── proxies (list):
+|    format ['user:pass@host:port', 'localhost']
+|    each scraper round-robins through the proxies
 │
-├── verbose (int) {0, 1, 2}: 
-|    Controls the verbosity of the runtime printouts 
-|    (0 prints only errors, 1 is errors+warnings, 2 is all logs. Default is 2.)
-
-├── linkedin_fetch_description (bool): 
-|    fetches full description and direct job url for LinkedIn (Increases requests by O(n))
+├── ca_cert (str): path to CA certificate file for proxies
 │
-├── linkedin_company_ids (list[int]): 
-|    searches for linkedin jobs with specific company ids
-|
-├── country_indeed (str): 
-|    filters the country on Indeed & Glassdoor (see below for correct spelling)
-|
-├── enforce_annual_salary (bool): 
-|    converts wages to annual salary
-|
-├── ca_cert (str)
-|    path to CA Certificate file for proxies
+├── user_agent (str): override the default user agent
+│
+├── description_format (str): markdown (default) or html
+│
+├── enforce_annual_salary (bool): converts monthly/hourly wages to annual
+│
+├── group_duplicates (bool): default True.
+|    fuzzy-groups likely-duplicate listings (e.g. the same role cross-posted
+|    to Indeed and LinkedIn, or a located + remote pass of the same board)
+|    into a shared dedup_group id. Never removes a row - grouping only adds
+|    a label so duplicates can be filtered or ranked downstream. Runs only
+|    when country_indeed="malaysia"; exact-URL dedup runs regardless.
+│
+├── linkedin_fetch_description (bool):
+|    fetches full description + direct job url (increases requests by O(n))
+│
+├── linkedin_company_ids (list[int])
+│
+├── easy_apply (bool):
+|    filters for jobs hosted on the board itself
+│
+└── verbose (int) {0, 1, 2}:
+     0 = errors only, 1 = errors + warnings, 2 = all logs. Default is 0.
 ```
 
+### Filter limitations
+
 ```
-├── Indeed limitations:
-|    Only one from this list can be used in a search:
+├── Indeed: only ONE of these per search
 |    - hours_old
 |    - job_type & is_remote
 |    - easy_apply
 │
-└── LinkedIn limitations:
-|    Only one from this list can be used in a search:
-|    - hours_old
-|    - easy_apply
+└── LinkedIn: only ONE of these per search
+     - hours_old
+     - easy_apply
 ```
 
-## Supported Countries for Job Searching
+## Output
 
-### **LinkedIn**
-
-LinkedIn searches globally & uses only the `location` parameter. 
-
-### **ZipRecruiter**
-
-ZipRecruiter searches for jobs in **US/Canada** & uses only the `location` parameter.
-
-### **Indeed / Glassdoor**
-
-Indeed & Glassdoor supports most countries, but the `country_indeed` parameter is required. Additionally, use the `location`
-parameter to narrow down the location, e.g. city & state if necessary. 
-
-You can specify the following countries when searching on Indeed (use the exact name, * indicates support for Glassdoor):
-
-|                      |              |            |                |
-|----------------------|--------------|------------|----------------|
-| Argentina            | Australia*   | Austria*   | Bahrain        |
-| Belgium*             | Brazil*      | Canada*    | Chile          |
-| China                | Colombia     | Costa Rica | Czech Republic |
-| Denmark              | Ecuador      | Egypt      | Finland        |
-| France*              | Germany*     | Greece     | Hong Kong*     |
-| Hungary              | India*       | Indonesia  | Ireland*       |
-| Israel               | Italy*       | Japan      | Kuwait         |
-| Luxembourg           | Malaysia     | Mexico*    | Morocco        |
-| Netherlands*         | New Zealand* | Nigeria    | Norway         |
-| Oman                 | Pakistan     | Panama     | Peru           |
-| Philippines          | Poland       | Portugal   | Qatar          |
-| Romania              | Saudi Arabia | Singapore* | South Africa   |
-| South Korea          | Spain*       | Sweden     | Switzerland*   |
-| Taiwan               | Thailand     | Turkey     | Ukraine        |
-| United Arab Emirates | UK*          | USA*       | Uruguay        |
-| Venezuela            | Vietnam*     |            |                |
-
-### **Bayt**
-
-Bayt only uses the search_term parameter currently and searches internationally
-
-
-
-## Notes
-* Indeed is the best scraper currently with no rate limiting.  
-* All the job board endpoints are capped at around 1000 jobs on a given search.  
-* LinkedIn is the most restrictive and usually rate limits around the 10th page with one ip. Proxies are a must basically.
-
-## Frequently Asked Questions
-
----
-**Q: Why is Indeed giving unrelated roles?**  
-**A:** Indeed searches the description too.
-
-- use - to remove words
-- "" for exact match
-
-Example of a good Indeed query
-
-```py
-search_term='"engineering intern" software summer (java OR python OR c++) 2025 -tax -marketing'
+```
+SITE      TITLE                       COMPANY            LOCATION                  JOB_TYPE  INTERVAL  MIN_AMOUNT  MAX_AMOUNT  CURRENCY
+indeed    Software Engineer           Setel Ventures     Kuala Lumpur, MY          fulltime  monthly   6000        9000        MYR
+indeed    Backend Developer           Grab               Petaling Jaya, Selangor   fulltime  monthly   7000        11000       MYR
+linkedin  Senior Software Engineer    AirAsia            Kuala Lumpur, Malaysia    fulltime  None      None        None        None
+linkedin  Full-Stack Developer        Carsome            Cyberjaya, Selangor       fulltime  None      None        None        None
+google    Software Engineer (Fresh)   Maxis              Kuala Lumpur              fulltime  None      None        None        None
 ```
 
-This searches the description/title and must include software, summer, 2025, one of the languages, engineering intern exactly, no tax, no marketing.
+For `country_indeed="malaysia"` the DataFrame carries four additional columns, populated by the Malaysia normalization pipeline (`jobspy/malaysia/`):
+
+- **`city`**, **`state`** — the posting's location, split out of `location`. `state` is normalized to a canonical Malaysian state name even when the board itself reports something else — Indeed, for example, returns ISO 3166-2 codes (`M14`, `M10`, `M07`, …) which are mapped to `Kuala Lumpur`, `Selangor`, `Pulau Pinang`, etc.
+- **`dedup_group`** — a shared id assigned to listings that look like the same job (e.g. cross-posted to two boards, or picked up by both the located and remote search pass). Grouping never removes a row; it only labels likely duplicates so they can be filtered or ranked downstream.
+- **`remote_scope`** — one of `my`, `apac`, `global`, `other_country`, `unknown`, or `None` for non-remote postings, inferred from the description text (and location, when there's no description). Treat it as a sorting aid, not a guarantee: most postings never state remote eligibility at all, so `unknown` is expected to dominate.
+
+## FAQ
+
+**Q: Indeed is returning unrelated roles.**
+Indeed searches the description text too. Narrow it with operators:
+
+```python
+search_term='"software engineer" (python OR golang) -sales -insurance'
+```
+
+Use `-` to exclude words and `""` for exact matches.
 
 ---
 
-**Q: No results when using "google"?**  
-**A:** You have to use super specific syntax. Search for google jobs on your browser and then whatever pops up in the google jobs search box after applying some filters is what you need to copy & paste into the google_search_term. 
+**Q: No results from `google`?**
+Google Jobs requires very specific phrasing. Search Google Jobs in your browser, apply filters, then copy the exact text from the search box into `google_search_term`.
 
 ---
 
-**Q: Received a response code 429?**  
-**A:** This indicates that you have been blocked by the job board site for sending too many requests. All of the job board sites are aggressive with blocking. We recommend:
-
-- Wait some time between scrapes (site-dependent).
-- Try using the proxies param to change your IP address.
+**Q: Getting a 429 response?**
+You've been rate limited. Wait between scrapes, or use the `proxies` param to rotate IPs. LinkedIn typically blocks around the 10th page from a single IP.
 
 ---
 
-### JobPost Schema
+**Q: Why so few results per search?**
+All job board endpoints cap out around 1000 jobs per search. Split broad searches by location or job title.
+
+## JobPost schema
 
 ```plaintext
 JobPost
@@ -223,7 +240,7 @@ JobPost
 ├── location
 │   ├── country
 │   ├── city
-│   ├── state
+│   └── state
 ├── is_remote
 ├── description
 ├── job_type: fulltime, parttime, internship, contract
@@ -234,12 +251,14 @@ JobPost
 │   ├── currency
 │   └── salary_source: direct_data, description (parsed from posting)
 ├── date_posted
-└── emails
+├── emails
+├── dedup_group (Malaysia normalization pipeline)
+└── remote_scope: my, apac, global, other_country, unknown (Malaysia normalization pipeline)
 
-Linkedin specific
+LinkedIn specific
 └── job_level
 
-Linkedin & Indeed specific
+LinkedIn & Indeed specific
 └── company_industry
 
 Indeed specific
@@ -249,12 +268,8 @@ Indeed specific
 ├── company_revenue_label
 ├── company_description
 └── company_logo
-
-Naukri specific
-├── skills
-├── experience_range
-├── company_rating
-├── company_reviews_count
-├── vacancy_count
-└── work_from_home_type
 ```
+
+## Credits
+
+Built on [JobSpy](https://github.com/cullenwatson/JobSpy) by Cullen Watson and Zachary Hampton. Licensed under MIT — see [LICENSE](LICENSE).

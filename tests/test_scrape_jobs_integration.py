@@ -345,3 +345,26 @@ def test_include_remote_noop_is_not_logged_when_is_remote_already_set(
 
     messages = [record.getMessage() for record in caplog.records]
     assert not any("include_remote=True has no effect" in m for m in messages)
+
+
+def test_default_sites_are_malaysia_relevant():
+    from jobspy import DEFAULT_SITES
+
+    assert {site.value for site in DEFAULT_SITES} == {"indeed", "linkedin", "google"}
+
+
+def test_unsupported_board_still_works_when_named_explicitly(monkeypatch, make_job):
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://bayt/1")])
+
+    monkeypatch.setattr(jobspy, "BaytScraper", OkScraper, raising=False)
+
+    df = jobspy.scrape_jobs(
+        site_name=["bayt"], search_term="engineer", results_wanted=1
+    )
+
+    assert len(df) == 1
