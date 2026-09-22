@@ -139,17 +139,19 @@ def scrape_jobs(
         # Site attribution lives in the dict key, not on JobPost, so remember
         # which site each job came from before flattening for the pipeline.
         site_by_job = {
-            id(job): site
-            for site, response in site_to_jobs_dict.items()
+            id(job): site_value
+            for site_value, response in site_to_jobs_dict.items()
             for job in response.jobs
         }
         all_jobs = [job for r in site_to_jobs_dict.values() for job in r.jobs]
         normalized = malaysia_normalize(all_jobs, group_duplicates=group_duplicates)
 
-        regrouped = {site: JobResponse(jobs=[]) for site in site_to_jobs_dict}
+        regrouped = {
+            site_value: JobResponse(jobs=[]) for site_value in site_to_jobs_dict
+        }
         for job in normalized:
-            site = site_by_job.get(id(job))
-            if site is None:
+            site_value = site_by_job.get(id(job))
+            if site_value is None:
                 # normalize() is documented to return the same objects it
                 # was given, so this should be unreachable. If that
                 # contract ever breaks, fail soft (log + keep the job under
@@ -160,9 +162,9 @@ def scrape_jobs(
                     f"normalize() returned a job with no known origin site, "
                     f"keeping it under 'unknown': {job.job_url!r}"
                 )
-                site = "unknown"
-                regrouped.setdefault(site, JobResponse(jobs=[]))
-            regrouped[site].jobs.append(job)
+                site_value = "unknown"
+                regrouped.setdefault(site_value, JobResponse(jobs=[]))
+            regrouped[site_value].jobs.append(job)
         site_to_jobs_dict = regrouped
 
     return build_jobs_dataframe(

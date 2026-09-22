@@ -73,3 +73,59 @@ def test_pipeline_populates_state_column(monkeypatch, make_job):
     )
 
     assert df.iloc[0]["state"] == "Selangor"
+
+
+def test_pipeline_is_skipped_for_non_malaysia_country(monkeypatch, make_job):
+    calls = []
+
+    def spy(jobs, **kwargs):
+        calls.append(len(jobs))
+        return jobs
+
+    monkeypatch.setattr(jobspy, "malaysia_normalize", spy)
+
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", OkScraper, raising=False)
+
+    jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="usa",
+        results_wanted=1,
+    )
+
+    assert calls == []  # the pipeline must never have run
+
+
+def test_pipeline_runs_for_malaysia(monkeypatch, make_job):
+    calls = []
+
+    def spy(jobs, **kwargs):
+        calls.append(len(jobs))
+        return jobs
+
+    monkeypatch.setattr(jobspy, "malaysia_normalize", spy)
+
+    class OkScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", OkScraper, raising=False)
+
+    jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="malaysia",
+        results_wanted=1,
+    )
+
+    assert calls == [1]  # the pipeline ran, over the one scraped job
