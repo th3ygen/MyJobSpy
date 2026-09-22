@@ -48,6 +48,17 @@ _SENIORITY_MARKERS = (
     "chief",
 )
 
+# Roman-numeral level suffixes, e.g. "Software Engineer II". Only up to "v" -
+# beyond that, plain titles essentially never use roman numerals and the
+# token risks colliding with an ordinary word.
+_ROMAN_LEVELS = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5}
+
+# Letter-number level/track codes, e.g. "L3", "P5", "T5". Kept in their own
+# namespace rather than folded into the bare-digit level, because the
+# letter usually denotes a distinct job ladder or track, not the same
+# level spelled differently - see _level_marker.
+_LEVEL_CODE_RE = re.compile(r"^[a-z]\d{1,2}$")
+
 
 def normalize_company(name: str | None) -> str:
     """Strips corporate suffixes and country tags so one company forms one block."""
@@ -76,13 +87,58 @@ def normalize_company(name: str | None) -> str:
     return text
 
 
+def _level_marker(tokens: list[str]) -> str | None:
+    """Returns a normalized trailing level marker, or None if the title has
+    no trailing level designator.
+
+    Anchored on the LAST token only - a level word appearing mid-title
+    (e.g. "Business Intelligence I") is a genuine trailing level and is
+    meant to fire; a bare "v" or "i" appearing earlier in a title is not a
+    level and must not fire. Anchoring on position, rather than scanning
+    every token, gets both right without special-casing.
+
+    "II" and "2" normalize to the same "level:2" marker: these are the same
+    real-world convention written two ways (e.g. "Software Engineer II" on
+    one board, "Software Engineer 2" on another for the same posting), and
+    conflating them lets that posting still group across boards. A
+    letter-number code like "L3" is kept in its own "code:" bucket instead,
+    since the letter usually denotes a separate job track/ladder rather
+    than the same level spelled differently - conflating those risks a
+    false merge. Being overcautious here (an extra "code:" bucket, or a
+    level distinction that turns out not to matter) only costs a missed
+    group, never a wrong one.
+    """
+    if not tokens:
+        return None
+
+    last = tokens[-1]
+    if last in _ROMAN_LEVELS:
+        return f"level:{_ROMAN_LEVELS[last]}"
+    if last.isdigit():
+        return f"level:{int(last)}"
+    if _LEVEL_CODE_RE.match(last):
+        return f"code:{last}"
+    return None
+
+
 def seniority_markers(title: str | None) -> frozenset[str]:
-    """Returns the rank words present in a title."""
+    """Returns the rank words and trailing level designator present in a
+    title. Two titles differing only by rank word or level (e.g. "Senior
+    Software Engineer" vs "Software Engineer", or "Software Engineer II"
+    vs "Software Engineer I") must never share a group - see
+    _level_marker and the module-level note on _SENIORITY_MARKERS.
+    """
     if not title:
         return frozenset()
 
-    tokens = set(re.findall(r"[a-z]+", title.lower()))
-    return frozenset(marker for marker in _SENIORITY_MARKERS if marker in tokens)
+    tokens = re.findall(r"[a-z0-9]+", title.lower())
+    markers = {marker for marker in _SENIORITY_MARKERS if marker in tokens}
+
+    level = _level_marker(tokens)
+    if level is not None:
+        markers.add(level)
+
+    return frozenset(markers)
 
 
 def _normalize_title(title: str | None) -> str:

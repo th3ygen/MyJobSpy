@@ -209,6 +209,132 @@ def test_never_groups_applify_seniority_pair(make_job):
     assert grouped[0].dedup_group != grouped[1].dedup_group
 
 
+def test_detects_trailing_level_markers():
+    """ "II" and "2" are the same real-world level convention written two
+    ways, so they normalize to the same marker. A letter-number code like
+    "L3" is kept in its own namespace - see _level_marker."""
+    assert seniority_markers("Software Engineer II") == frozenset({"level:2"})
+    assert seniority_markers("Software Engineer 2") == frozenset({"level:2"})
+    assert seniority_markers("Backend Engineer L3") == frozenset({"code:l3"})
+    # A trailing level word is a real level, wherever in the title it sits.
+    assert seniority_markers("Business Intelligence I") == frozenset({"level:1"})
+    # A bare roman-numeral-shaped word NOT in trailing position is not a
+    # level - anchoring on the last token avoids a false trigger here.
+    assert seniority_markers("Engineer V Team") == frozenset()
+
+
+def test_roman_numeral_levels_do_not_group(make_job):
+    # Real false positive from a live scrape: Experian Asia Pacific posted
+    # both "Software Engineer I" and "Software Engineer II" as distinct
+    # openings, and they grouped as one posting before this fix - neither
+    # title carries a word marker, and token_sort_ratio scores the pair
+    # around 97, comfortably over threshold.
+    jobs = [
+        make_job(
+            job_url="https://a/1",
+            company_name="Experian Asia Pacific",
+            title="Software Engineer I",
+            location=_my(),
+        ),
+        make_job(
+            job_url="https://b/1",
+            company_name="Experian Asia Pacific",
+            title="Software Engineer II",
+            location=_my(),
+        ),
+    ]
+
+    grouped = assign_groups(jobs)
+
+    assert grouped[0].dedup_group != grouped[1].dedup_group
+
+
+def test_numeric_levels_do_not_group(make_job):
+    jobs = [
+        make_job(
+            job_url="https://a/1",
+            company_name="Acme Sdn Bhd",
+            title="Data Engineer 1",
+            location=_my(),
+        ),
+        make_job(
+            job_url="https://b/1",
+            company_name="Acme Sdn Bhd",
+            title="Data Engineer 2",
+            location=_my(),
+        ),
+    ]
+
+    grouped = assign_groups(jobs)
+
+    assert grouped[0].dedup_group != grouped[1].dedup_group
+
+
+def test_letter_number_level_codes_do_not_group(make_job):
+    jobs = [
+        make_job(
+            job_url="https://a/1",
+            company_name="Acme Sdn Bhd",
+            title="Backend Engineer L3",
+            location=_my(),
+        ),
+        make_job(
+            job_url="https://b/1",
+            company_name="Acme Sdn Bhd",
+            title="Backend Engineer L4",
+            location=_my(),
+        ),
+    ]
+
+    grouped = assign_groups(jobs)
+
+    assert grouped[0].dedup_group != grouped[1].dedup_group
+
+
+def test_same_level_still_groups(make_job):
+    jobs = [
+        make_job(
+            job_url="https://a/1",
+            company_name="Experian Asia Pacific",
+            title="Software Engineer II",
+            location=_my(),
+        ),
+        make_job(
+            job_url="https://b/1",
+            company_name="Experian Asia Pacific",
+            title="Software Engineer II",
+            location=_my(),
+        ),
+    ]
+
+    grouped = assign_groups(jobs)
+
+    assert grouped[0].dedup_group is not None
+    assert grouped[0].dedup_group == grouped[1].dedup_group
+
+
+def test_unlevelled_titles_still_group(make_job):
+    jobs = [
+        make_job(
+            job_url="https://a/1",
+            company_name="Experian Asia Pacific",
+            title="Software Engineer",
+            location=_my(),
+        ),
+        make_job(
+            job_url="https://b/1",
+            company_name="Experian Asia Pacific",
+            title="Software Engineer",
+            location=_my(),
+        ),
+    ]
+
+    grouped = assign_groups(jobs)
+
+    assert grouped[0].dedup_group is not None
+    assert grouped[0].dedup_group == grouped[1].dedup_group
+
+
 def test_aveva_pair_token_sort_ratio_is_on_record():
     """Pins the actual score for this real pair so the margin relative to
     threshold=90 is on record. Measured at 89.86: close to, but just under,
