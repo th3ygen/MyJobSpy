@@ -259,7 +259,9 @@ def normalize_location(
 
     `state` is set only on a genuine gazetteer or ISO-code match — an
     unrecognized raw state string (e.g. the country name "Malaysia", or a
-    typo) is never written into the state field as if it were canonical.
+    typo) is never written into the state field as if it were canonical. On
+    a miss, `state` is cleared to None rather than left as the raw text (see
+    comment on the miss path below); `city` is left untouched either way.
     """
     if location is None:
         return None, None
@@ -286,4 +288,13 @@ def normalize_location(
         )
 
     unmatched = ", ".join(part for part in (location.city, location.state) if part)
-    return location, (unmatched or None)
+    # Canonical-or-nothing: a raw, unresolved state string (e.g. the country
+    # name "Malaysia") must never sit in the `state` field, because Task 10's
+    # duplicate grouping compares jobs by equal state and would otherwise
+    # group unrelated postings under shared junk values. The raw text isn't
+    # lost — it's still in `unmatched` for the gazetteer backlog. `city` is
+    # left as-is since it isn't consumed as a canonical value.
+    return (
+        Location(city=location.city, state=None, country=location.country),
+        unmatched or None,
+    )

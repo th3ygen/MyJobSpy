@@ -61,13 +61,16 @@ def test_uses_state_field_when_city_is_unknown():
     assert unmatched is None
 
 
-def test_unknown_location_passes_through_and_reports():
+def test_unknown_location_keeps_city_but_drops_state():
+    """On a miss, city is kept (still useful, ungazetteered data) but state
+    is nulled rather than left as raw junk — see the invariant that state is
+    canonical-or-nothing, since Task 10 groups duplicates by equal state."""
     original = Location(city="Atlantis", state="Nowhere")
 
     normalized, unmatched = normalize_location(original)
 
     assert normalized.city == "Atlantis"
-    assert normalized.state == "Nowhere"
+    assert normalized.state is None
     assert unmatched == "Atlantis, Nowhere"
 
 
@@ -128,13 +131,14 @@ def test_city_and_iso_code_together_resolve():
 
 def test_country_name_in_state_field_does_not_resolve():
     """'Malaysia' (a country) sometimes lands in the state slot; it must not
-    resolve to any MalaysianState."""
+    resolve to any MalaysianState, and must not survive into the output
+    state field either (nulled, not left as raw junk) — the raw value is
+    still available via `unmatched` for the gazetteer backlog."""
     original = Location(city="Atlantis", state="Malaysia")
 
     normalized, unmatched = normalize_location(original)
 
-    assert normalized.state == "Malaysia"
-    assert normalized.state not in {state.value for state in MalaysianState}
+    assert normalized.state is None
     assert unmatched == "Atlantis, Malaysia"
 
 
@@ -152,5 +156,5 @@ def test_empty_string_location_is_handled_like_a_miss():
     normalized, unmatched = normalize_location(Location(city="", state=""))
 
     assert normalized.city == ""
-    assert normalized.state == ""
+    assert normalized.state is None
     assert unmatched is None
