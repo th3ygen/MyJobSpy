@@ -13,6 +13,7 @@ from jobspy.indeed import Indeed
 from jobspy.linkedin import LinkedIn
 from jobspy.naukri import Naukri
 from jobspy.frame import build_jobs_dataframe
+from jobspy.malaysia import normalize as malaysia_normalize
 from jobspy.model import JobType, JobResponse, Country
 from jobspy.model import ScraperInput, Site
 from jobspy.util import (
@@ -37,7 +38,7 @@ def scrape_jobs(
     job_type: str | None = None,
     easy_apply: bool | None = None,
     results_wanted: int = 15,
-    country_indeed: str = "usa",
+    country_indeed: str = "malaysia",
     proxies: list[str] | str | None = None,
     ca_cert: str | None = None,
     description_format: str = "markdown",
@@ -46,6 +47,7 @@ def scrape_jobs(
     offset: int | None = 0,
     hours_old: int = None,
     enforce_annual_salary: bool = False,
+    group_duplicates: bool = True,
     verbose: int = 0,
     user_agent: str = None,
     **kwargs,
@@ -55,14 +57,14 @@ def scrape_jobs(
     :return: Pandas DataFrame containing job data
     """
     SCRAPER_MAPPING = {
-        Site.LINKEDIN: LinkedIn,
-        Site.INDEED: Indeed,
-        Site.ZIP_RECRUITER: ZipRecruiter,
-        Site.GLASSDOOR: Glassdoor,
-        Site.GOOGLE: Google,
-        Site.BAYT: BaytScraper,
-        Site.NAUKRI: Naukri,
-        Site.BDJOBS: BDJobs,  # Add BDJobs to the scraper mapping
+        Site.LINKEDIN: globals()["LinkedIn"],
+        Site.INDEED: globals()["Indeed"],
+        Site.ZIP_RECRUITER: globals()["ZipRecruiter"],
+        Site.GLASSDOOR: globals()["Glassdoor"],
+        Site.GOOGLE: globals()["Google"],
+        Site.BAYT: globals()["BaytScraper"],
+        Site.NAUKRI: globals()["Naukri"],
+        Site.BDJOBS: globals()["BDJobs"],
     }
     set_logger_level(verbose)
     job_type = get_enum_from_value(job_type) if job_type else None
@@ -122,8 +124,46 @@ def scrape_jobs(
         }
 
         for future in as_completed(future_to_site):
-            site_value, scraped_data = future.result()
+            site = future_to_site[future]
+            try:
+                site_value, scraped_data = future.result()
+            except Exception as exc:  # noqa: BLE001 - one board must not kill the run
+                create_logger(site.value.capitalize()).error(
+                    f"scrape failed, continuing without it: {exc}"
+                )
+                site_to_jobs_dict[site.value] = JobResponse(jobs=[])
+                continue
             site_to_jobs_dict[site_value] = scraped_data
+
+    if country_enum == Country.MALAYSIA:
+        # Site attribution lives in the dict key, not on JobPost, so remember
+        # which site each job came from before flattening for the pipeline.
+        site_by_job = {
+            id(job): site
+            for site, response in site_to_jobs_dict.items()
+            for job in response.jobs
+        }
+        all_jobs = [job for r in site_to_jobs_dict.values() for job in r.jobs]
+        normalized = malaysia_normalize(all_jobs, group_duplicates=group_duplicates)
+
+        regrouped = {site: JobResponse(jobs=[]) for site in site_to_jobs_dict}
+        for job in normalized:
+            site = site_by_job.get(id(job))
+            if site is None:
+                # normalize() is documented to return the same objects it
+                # was given, so this should be unreachable. If that
+                # contract ever breaks, fail soft (log + keep the job under
+                # an "unknown" bucket) rather than raising and taking the
+                # whole scrape down - the exact failure mode this task
+                # exists to eliminate.
+                create_logger("Malaysia").warning(
+                    f"normalize() returned a job with no known origin site, "
+                    f"keeping it under 'unknown': {job.job_url!r}"
+                )
+                site = "unknown"
+                regrouped.setdefault(site, JobResponse(jobs=[]))
+            regrouped[site].jobs.append(job)
+        site_to_jobs_dict = regrouped
 
     return build_jobs_dataframe(
         site_to_jobs_dict,
