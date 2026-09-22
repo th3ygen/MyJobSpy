@@ -17,7 +17,14 @@ _OTHER_COUNTRY_PATTERNS = (
     # A missed US-timezone hint costs far less than a false exclusion, because
     # this field sorts rather than filters.
     r"\b(?:pst|pdt|edt|cdt)\b",
-    r"\b(?:eastern|pacific|central|mountain)\s+(?:standard\s+|daylight\s+)?time\b",
+    # "Asia Pacific time zones" contains "pacific time" and was matching
+    # here, putting an APAC-eligible job on the highest-precedence
+    # exclusion branch - precisely the false exclusion this pattern was
+    # added to avoid. The lookbehinds let "Asia Pacific"/"Asia-Pacific"
+    # fall through to the APAC check while a bare "Pacific Standard Time"
+    # still fires.
+    r"(?<!asia )(?<!asia-)\b(?:eastern|pacific|central|mountain)"
+    r"\s+(?:standard\s+|daylight\s+)?time\b",
 )
 
 _MY_PATTERNS = (

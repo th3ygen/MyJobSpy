@@ -84,6 +84,50 @@ def test_contact_us_boilerplate_is_not_the_united_states(make_job):
     assert classify_remote_scope(job) == "my"
 
 
+def test_asia_pacific_time_is_not_a_us_timezone(make_job):
+    """The US-timezone pattern matched the "pacific time" inside "Asia
+    Pacific time zones", classifying an APAC-eligible job as other_country
+    on the highest-precedence branch - the exact false-exclusion class the
+    pattern was introduced to eliminate."""
+    job = make_job(
+        is_remote=True,
+        description="Remote role covering Asia Pacific time zones.",
+        location=None,
+    )
+
+    assert classify_remote_scope(job) != "other_country"
+
+
+def test_hyphenated_asia_pacific_time_is_not_a_us_timezone(make_job):
+    job = make_job(
+        is_remote=True,
+        description="Support customers across Asia-Pacific time zones.",
+        location=None,
+    )
+
+    assert classify_remote_scope(job) != "other_country"
+
+
+def test_genuine_pacific_standard_time_is_still_other_country(make_job):
+    job = make_job(
+        is_remote=True,
+        description="Core hours are 9am-5pm Pacific Standard Time.",
+        location=None,
+    )
+
+    assert classify_remote_scope(job) == "other_country"
+
+
+def test_genuine_eastern_time_is_still_other_country(make_job):
+    job = make_job(
+        is_remote=True,
+        description="You must overlap with Eastern Time for standups.",
+        location=None,
+    )
+
+    assert classify_remote_scope(job) == "other_country"
+
+
 def test_sergeant_abbreviation_is_not_singapore_time(make_job):
     job = make_job(
         is_remote=True,

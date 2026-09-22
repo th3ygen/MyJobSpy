@@ -99,6 +99,34 @@ def test_rejects_implausible_or_absent_salaries(text):
     assert parse_myr_salary(text) is None
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Ruling F15 dropped the per-interval *floor* on the explicit path so
+        # that a genuine "RM800.00 per month" would stop being rejected. It
+        # dropped the ceiling with it, which was an overreach: an explicit
+        # interval word is evidence about the interval, not about whether the
+        # amount beside it is pay at all. Ordinary prose then parses as salary.
+        "You will manage a portfolio worth RM2,500,000 and report monthly "
+        "to the board.",
+        "Oversee an annual budget of RM48,000,000 across the region.",
+        "The successful candidate will handle RM900,000 in daily transactions.",
+    ],
+)
+def test_explicit_interval_does_not_lift_the_ceiling(text):
+    assert parse_myr_salary(text) is None
+
+
+def test_explicit_interval_still_clears_the_floor():
+    """The case Ruling F15 exists for must keep working: RM800/month is
+    below the monthly band's floor but is a real, if low, monthly wage."""
+    parsed = parse_myr_salary("Pay: RM800.00 per month")
+
+    assert parsed is not None
+    assert parsed.min_amount == 800
+    assert parsed.interval.value == "monthly"
+
+
 def test_annual_band_is_wider_than_monthly():
     assert parse_myr_salary("RM120,000 per annum") is not None
 

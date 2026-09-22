@@ -10,15 +10,22 @@ from jobspy.model import Compensation, CompensationInterval
 # statutory minimum wage (RM1,700/month as of 2025) on purpose, to allow
 # part-time and internship rates through.
 #
-# These bands apply ONLY when the interval was *inferred* (no interval word
+# The FLOOR applies only when the interval was *inferred* (no interval word
 # was found in the text, so we defaulted to "monthly"). When the interval is
 # stated explicitly ("per month", "sejam", ...), there is nothing to infer
-# and therefore nothing for a tight band to protect against: a posting that
+# and therefore nothing for a tight floor to protect against: a posting that
 # literally says "RM800.00 per month" is not a mislabeled hourly rate, it is
 # a real (if low) monthly wage, and rejecting it would silently discard
 # genuine salary data pulled from real Indeed Malaysia listings (Ruling
-# F15). Do not collapse this into a single band - the two cases are guarding
-# against different failure modes.
+# F15).
+#
+# The CEILING applies on both paths. Ruling F15 was argued entirely about
+# the floor; dropping the ceiling alongside it was an overreach. An interval
+# word is evidence about the *interval*, not about whether the amount beside
+# it is pay at all, and ordinary prose pairs large MYR figures with interval
+# words constantly - "manage a portfolio worth RM2,500,000 and report
+# monthly" parsed as a RM2.5m monthly salary. The ceiling is the only thing
+# separating a wage from a budget, so an explicit interval must not lift it.
 _BANDS: dict[str, tuple[float, float]] = {
     "hourly": (8, 150),
     "daily": (30, 1_000),
@@ -26,11 +33,6 @@ _BANDS: dict[str, tuple[float, float]] = {
     "monthly": (1_000, 30_000),
     "yearly": (20_000, 500_000),
 }
-
-# Ceiling used only when the interval is explicit in the text - see the
-# comment on _BANDS above for why explicit intervals skip the tight band.
-# There is no floor beyond "greater than zero" in that case.
-_ABSURDITY_CEILING = 10_000_000
 
 # Requires at least one comma group ("+", not "*") so that a plain,
 # non-comma-formatted number such as "3000" is never partially matched by
@@ -96,18 +98,20 @@ def parse_myr_salary(text: str | None) -> Compensation | None:
     explicit_interval = detect_interval(text)
     interval = explicit_interval or "monthly"
 
+    floor, ceiling = _BANDS[interval]
+
     if explicit_interval is not None:
-        # The text states its own interval - trust it. Only guard against
-        # outright absurdity (typos, misplaced zeros); the tight
-        # per-interval band below exists solely to catch amounts whose
-        # interval had to be *guessed*, which is not the case here.
-        plausible = 0 < low <= _ABSURDITY_CEILING and 0 < high <= _ABSURDITY_CEILING
+        # The text states its own interval - trust it, and drop the floor
+        # accordingly (Ruling F15). The ceiling still stands: it is what
+        # separates a wage from a figure that merely happens to sit near an
+        # interval word, and no interval word makes RM2,500,000 a monthly
+        # salary. See the note on _BANDS.
+        plausible = 0 < low <= ceiling and 0 < high <= ceiling
     else:
         # No interval word was found - we are guessing "monthly". Apply the
-        # tight band, because this is exactly the situation it exists to
+        # floor too, because this is exactly the situation it exists to
         # guard: a bare "RM800" is more likely an hourly or daily rate that
         # got quoted without its interval than a genuine monthly wage.
-        floor, ceiling = _BANDS[interval]
         plausible = floor <= low <= ceiling and floor <= high <= ceiling
 
     if not plausible:
