@@ -17,7 +17,7 @@ def build_jobs_dataframe(
 
     for site, job_response in site_to_jobs.items():
         for job in job_response.jobs:
-            job_data = job.dict()
+            job_data = job.model_dump()
             job_data["site"] = site
             job_data["company"] = job_data["company_name"]
             job_data["job_type"] = (
@@ -29,9 +29,10 @@ def build_jobs_dataframe(
                 ", ".join(job_data["emails"]) if job_data["emails"] else None
             )
             if job_data["location"]:
-                job_data["location"] = Location(
-                    **job_data["location"]
-                ).display_location()
+                location = Location(**job_data["location"])
+                job_data["city"] = location.city
+                job_data["state"] = location.state
+                job_data["location"] = location.display_location()
 
             compensation_obj = job_data.get("compensation")
             if compensation_obj and isinstance(compensation_obj, dict):
