@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from jobspy.malaysia import normalize
 from jobspy.model import Country, Location
 
@@ -84,6 +86,28 @@ def test_a_failing_normalizer_does_not_abort_the_batch(make_job, monkeypatch):
 
     assert len(result) == 1
     assert result[0].compensation is None
+
+
+def test_normalizer_failures_are_counted_and_reported(make_job, monkeypatch, caplog):
+    import jobspy.malaysia as pipeline
+
+    def boom(_):
+        raise ValueError("bad input")
+
+    monkeypatch.setattr(pipeline, "parse_myr_salary", boom)
+    # create_logger sets propagate=False, so caplog cannot see these records
+    # unless propagation is re-enabled for the duration of this test.
+    monkeypatch.setattr(pipeline.log, "propagate", True)
+    caplog.set_level(logging.WARNING, logger="JobSpy:Malaysia")
+
+    jobs = [make_job(job_url=f"https://x/{i}", description="RM5,000") for i in range(3)]
+    normalize(jobs)
+
+    messages = [record.getMessage() for record in caplog.records]
+    # the per-job warning, naming the offending input
+    assert any("salary normalizer failed for" in m for m in messages)
+    # the per-stage rollup, so a deleted summary block is caught
+    assert any("salary normalizer failed on 3 job(s)" in m for m in messages)
 
 
 def test_empty_input_is_safe():
