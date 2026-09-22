@@ -62,7 +62,7 @@ Use `location="Malaysia"` for a nationwide search, or add `is_remote=True` for r
 
 | Board | Status | Notes |
 |---|---|---|
-| **Indeed** | ✅ Default | Uses `malaysia.indeed.com`. Requires `country_indeed="malaysia"`. No rate limiting. Returns real results, but no structured salary data — see caveats below. |
+| **Indeed** | ✅ Default | Uses `malaysia.indeed.com`. Requires `country_indeed="malaysia"`. Rate limited in practice — sustained or large-`results_wanted` runs start returning empty pages, so pace your scrapes and use proxies for anything heavy. Returns real results, but no structured salary data — see caveats below. |
 | **LinkedIn** | ✅ Default | Searches globally via `location`. Heavily rate limited — proxies recommended. Returns real results, but no salary data and no description text unless `linkedin_fetch_description=True`. |
 | **Google** | ✅ Default | Filtered *only* by `google_search_term`. Needs very specific phrasing (see FAQ) — returned zero rows across every search tried during this project's measurements. |
 | Glassdoor | ⚠️ Quarantined | No Malaysian Glassdoor domain; falls back to `www.glassdoor.com` and returns US-centric results. Not in the default `site_name`; pass `site_name="glassdoor"` to use it anyway. |
@@ -158,7 +158,9 @@ Optional
 |    to Indeed and LinkedIn, or a located + remote pass of the same board)
 |    into a shared dedup_group id. Never removes a row - grouping only adds
 |    a label so duplicates can be filtered or ranked downstream. Runs only
-|    when country_indeed="malaysia"; exact-URL dedup runs regardless.
+|    when country_indeed="malaysia"; exact dedup runs regardless. Set it to
+|    False and the dedup_group column is all-None, not partially filled -
+|    df.groupby("dedup_group") then yields nothing at all.
 │
 ├── linkedin_fetch_description (bool):
 |    fetches full description + direct job url (increases requests by O(n))
@@ -188,19 +190,21 @@ Optional
 ## Output
 
 ```
-SITE      TITLE                       COMPANY            LOCATION                  JOB_TYPE  INTERVAL  MIN_AMOUNT  MAX_AMOUNT  CURRENCY
-indeed    Software Engineer           Setel Ventures     Kuala Lumpur, MY          fulltime  monthly   6000        9000        MYR
-indeed    Backend Developer           Grab               Petaling Jaya, Selangor   fulltime  monthly   7000        11000       MYR
-linkedin  Senior Software Engineer    AirAsia            Kuala Lumpur, Malaysia    fulltime  None      None        None        None
-linkedin  Full-Stack Developer        Carsome            Cyberjaya, Selangor       fulltime  None      None        None        None
-google    Software Engineer (Fresh)   Maxis              Kuala Lumpur              fulltime  None      None        None        None
+SITE      TITLE                       COMPANY            LOCATION                              JOB_TYPE  INTERVAL  MIN_AMOUNT  MAX_AMOUNT  CURRENCY
+indeed    Software Engineer           Setel Ventures     Kuala Lumpur, Kuala Lumpur, Malaysia  fulltime  monthly   6000        9000        MYR
+indeed    Backend Developer           Grab               Petaling Jaya, Selangor, Malaysia     fulltime  monthly   7000        11000       MYR
+linkedin  Senior Software Engineer    AirAsia            Kuala Lumpur, Kuala Lumpur, Malaysia  fulltime  None      None        None        None
+linkedin  Full-Stack Developer        Carsome            Cyberjaya, Selangor, Malaysia         fulltime  None      None        None        None
+google    Software Engineer (Fresh)   Maxis              Kuala Lumpur, Kuala Lumpur, Malaysia  fulltime  None      None        None        None
 ```
+
+`location` is the *normalized* location — city, canonical state, country — whatever shape the board originally reported (Indeed's raw `Kuala Lumpur, MY` becomes the row above). Kuala Lumpur appears twice in a KL row because it is both the city and the federal territory that serves as its state.
 
 For `country_indeed="malaysia"` the DataFrame carries four additional columns, populated by the Malaysia normalization pipeline (`jobspy/malaysia/`):
 
 - **`city`**, **`state`** — the posting's location, split out of `location`. `state` is normalized to a canonical Malaysian state name even when the board itself reports something else — Indeed, for example, returns ISO 3166-2 codes (`M14`, `M10`, `M07`, …) which are mapped to `Kuala Lumpur`, `Selangor`, `Pulau Pinang`, etc.
-- **`dedup_group`** — a shared id assigned to listings that look like the same job (e.g. cross-posted to two boards, or picked up by both the located and remote search pass). Grouping never removes a row; it only labels likely duplicates so they can be filtered or ranked downstream.
-- **`remote_scope`** — one of `my`, `apac`, `global`, `other_country`, `unknown`, or `None` for non-remote postings, inferred from the description text (and location, when there's no description). Treat it as a sorting aid, not a guarantee: most postings never state remote eligibility at all, so `unknown` is expected to dominate.
+- **`dedup_group`** — a shared id assigned to listings that look like the same job (e.g. cross-posted to two boards, or picked up by both the located and remote search pass). Grouping never removes a row; it only labels likely duplicates so they can be filtered or ranked downstream. **Populated on every row only when `group_duplicates=True`** (the default); with `group_duplicates=False` the column is all-`None`, so `df.groupby("dedup_group")` silently yields no groups rather than erroring.
+- **`remote_scope`** — one of `my`, `apac`, `global`, `other_country`, `unknown`, or `None` for non-remote postings, inferred from the description text (and location, when there's no description). Treat it as a sorting aid, not a guarantee: most postings never state remote eligibility at all, so `unknown` is expected to dominate. In practice the location does most of the work: location normalization stamps `country=MALAYSIA` on any resolvable Malaysian posting, and the `my` check outranks `apac`, so a remote job located in Malaysia classifies `my` whatever its description says about wider eligibility.
 
 ## FAQ
 

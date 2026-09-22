@@ -2979,12 +2979,13 @@ git commit -m "feat: default to MY-relevant boards and capture phase 1 baseline"
 
 ## Deferred from the spec (with reasons)
 
-Checked against the spec section by section. Four spec items have no task here, all deliberately:
+Checked against the spec section by section. Five spec items have no task here, all deliberately:
 
 - **Fixture-based scraper tests.** The spec's second testing tier records an HTTP response per board. Phases 0–1 change no scraper parsing logic, so fixtures here would test code this plan does not touch. Build them in phase 2 alongside the JobStreet scraper, where they are genuinely load-bearing.
 - **A `live`-marked test.** The marker is configured in Task 1, but the actual live check for phases 0–1 is the baseline runner (Tasks 5 and 14), which exercises all three boards end to end. A redundant `@pytest.mark.live` test would add nothing.
 - **`query_language` on scraper classes and EN→BM query expansion.** `to_bm_query` ships in Task 6, but nothing calls it — every phase 0–1 board is English-dominant. The wiring belongs with Maukerja/Ricebowl in phase 3, per the spec's own phasing.
 - **Playwright as an optional extra.** No phase 0–1 board needs a browser. Add the extra when the first board that requires it arrives.
+- **Malay relative-date parsing (`parse_bm_relative_date`).** Ships and is tested, but has no production caller: neither Indeed MY nor LinkedIn emits Malay relative dates today (both return either an absolute date or an English relative string). Wire it up alongside the first board that does — Maukerja/Ricebowl in phase 3 — rather than leaving speculative plumbing in the pipeline.
 
 ## Done criteria
 

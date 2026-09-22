@@ -57,6 +57,12 @@ def normalize(jobs: list[JobPost], *, group_duplicates: bool = True) -> list[Job
     A stage that raises on one job is logged and skipped for that job only -
     it must never take the batch down. Exact dedup always runs;
     group_duplicates=False disables fuzzy grouping only.
+
+    dedup_group is all-or-nothing, not partially filled: with
+    group_duplicates=True assign_groups stamps every returned job, and with
+    group_duplicates=False every job keeps its default None. A caller doing
+    df.groupby("dedup_group") in the latter mode gets no groups at all
+    rather than an error.
     """
     if not jobs:
         return []

@@ -60,6 +60,13 @@ def scrape_jobs(
 ) -> pd.DataFrame:
     """
     Scrapes job data from job boards concurrently
+    :param group_duplicates: fuzzy-group likely-duplicate listings into a shared
+        dedup_group id. Malaysia only, and non-destructive - it labels rows,
+        never removes them. Note the column is all-or-nothing: with
+        group_duplicates=True every row carries a dedup_group, and with
+        group_duplicates=False every row carries None, so
+        df.groupby("dedup_group") silently yields no groups in that mode
+        rather than raising.
     :param include_remote: run a second, remote-flagged query pass per board and
         union the results. Malaysia only - the exact-dedup step that absorbs the
         two passes' overlap runs only for country_indeed="malaysia", so this is a
