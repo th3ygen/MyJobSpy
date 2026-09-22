@@ -159,6 +159,25 @@ def test_state_match_rate_counts_only_canonical_states():
     assert m2.state_match_rate == 1.0
 
 
+def test_remote_scope_collapses_null_like_values_into_one_bucket():
+    """A live run showed None and NaN counted as two separate buckets
+    (value_counts(dropna=False) treats them as distinct keys in a mixed
+    object column). remote_scope is None-by-design for non-remote jobs, so
+    every null-like value must collapse into a single, clearly-labeled
+    bucket rather than inventing a false split in the report."""
+    df = pd.DataFrame(
+        {
+            "remote_scope": pd.array(
+                ["my", None, float("nan"), "my", None], dtype="object"
+            )
+        }
+    )
+
+    m = compute_metrics(df)
+
+    assert m.remote_scope_counts == {"my": 2, "(not remote)": 3}
+
+
 def test_empty_frame_is_safe():
     m = compute_metrics(pd.DataFrame())
 

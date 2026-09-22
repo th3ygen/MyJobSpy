@@ -67,10 +67,18 @@ def compute_metrics(df: pd.DataFrame, *, top_n: int = 25) -> BaselineMetrics:
 
     remote_scope_counts: dict[str, int] = {}
     if "remote_scope" in df.columns:
+        scope_series = df["remote_scope"]
+        # value_counts(dropna=False) treats Python None and float("nan") as
+        # distinct keys in an object-dtype column, which invents a false
+        # split the data doesn't have. remote_scope is None by design for
+        # every non-remote job, so collapse all null-like values into one
+        # clearly-labeled bucket instead.
+        null_count = int(scope_series.isna().sum())
         remote_scope_counts = {
-            str(k): int(v)
-            for k, v in df["remote_scope"].value_counts(dropna=False).items()
+            str(k): int(v) for k, v in scope_series.dropna().value_counts().items()
         }
+        if null_count:
+            remote_scope_counts["(not remote)"] = null_count
 
     top_locations: list[tuple[str, int]] = []
     if "location" in df.columns:

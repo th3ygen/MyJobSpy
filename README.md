@@ -32,7 +32,7 @@ jobs = scrape_jobs(
     search_term="software engineer",
     google_search_term="software engineer jobs in Kuala Lumpur Malaysia since yesterday",
     location="Kuala Lumpur, Malaysia",
-    country_indeed="malaysia",          # required for Indeed — routes to malaysia.indeed.com
+    country_indeed="malaysia",          # already the default; shown for clarity — routes to malaysia.indeed.com
     results_wanted=20,
     hours_old=72,
 
@@ -82,7 +82,6 @@ None of the following are implemented yet. They are the intended direction of th
 - [ ] **Maukerja** — Bahasa Malaysia listings, blue-collar & retail heavy
 - [ ] **Ricebowl** — SME and fresh-grad roles
 - [ ] **Glints Malaysia** — tech and startup roles
-- [ ] MYR salary parsing from job descriptions (see caveat below)
 - [ ] Bahasa Malaysia search-term handling (e.g. *jurutera*, *kerani*, *pemandu*)
 
 Contributions toward any of these are welcome.
@@ -268,6 +267,14 @@ Indeed specific
 ├── company_revenue_label
 ├── company_description
 └── company_logo
+
+Naukri specific (quarantined by default — see Supported job boards)
+├── skills
+├── experience_range
+├── company_rating
+├── company_reviews_count
+├── vacancy_count
+└── work_from_home_type
 ```
 
 ## Credits
