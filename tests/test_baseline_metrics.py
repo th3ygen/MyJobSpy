@@ -142,6 +142,23 @@ def test_state_match_rate_is_zero_when_unpopulated():
     assert compute_metrics(df).state_match_rate == 0.0
 
 
+def test_state_match_rate_counts_only_canonical_states():
+    """A raw, unnormalized value (an ISO code) must not count as a match,
+    while a canonical MalaysianState value must."""
+    df = _frame(
+        [
+            ["indeed", "u1", "A", "X", "KL", None, "M14", None, None, False, None],
+            ["indeed", "u2", "B", "X", "KL", None, "Selangor", None, None, False, None],
+        ]
+    )
+
+    m1 = compute_metrics(df.iloc[[0]])
+    m2 = compute_metrics(df.iloc[[1]])
+
+    assert m1.state_match_rate == 0.0
+    assert m2.state_match_rate == 1.0
+
+
 def test_empty_frame_is_safe():
     m = compute_metrics(pd.DataFrame())
 

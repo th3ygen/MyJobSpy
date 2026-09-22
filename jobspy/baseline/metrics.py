@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from jobspy.malaysia.location import MalaysianState
+
 
 @dataclass
 class BaselineMetrics:
@@ -24,6 +26,18 @@ def _fill_rate(df: pd.DataFrame, column: str) -> float:
     if column not in df.columns or len(df) == 0:
         return 0.0
     return round(float(df[column].notna().sum()) / len(df), 4)
+
+
+def _canonical_state_rate(df: pd.DataFrame) -> float:
+    """Fraction of rows whose state is a canonical MalaysianState.
+
+    Deliberately NOT a plain fill-rate: scrapers emit raw state values
+    (ISO codes, country names) that must not count as normalized.
+    """
+    if "state" not in df.columns or len(df) == 0:
+        return 0.0
+    valid = {state.value for state in MalaysianState}
+    return round(float(df["state"].isin(valid).sum()) / len(df), 4)
 
 
 def compute_metrics(df: pd.DataFrame, *, top_n: int = 25) -> BaselineMetrics:
@@ -68,7 +82,7 @@ def compute_metrics(df: pd.DataFrame, *, top_n: int = 25) -> BaselineMetrics:
         rows_per_site=rows_per_site,
         salary_fill_rate=_fill_rate(df, "min_amount"),
         date_fill_rate=_fill_rate(df, "date_posted"),
-        state_match_rate=_fill_rate(df, "state"),
+        state_match_rate=_canonical_state_rate(df),
         remote_rate=remote_rate,
         remote_scope_counts=remote_scope_counts,
         exact_duplicate_rows=exact_duplicates,
