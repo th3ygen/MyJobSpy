@@ -26,8 +26,17 @@ pydantic = "^2.3.0"
 tls-client = "^1.0.1"
 markdownify = "^1.1.0"
 regex = "^2024.4.28"
+rapidfuzz = "^3.9.0"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
 black = "*"
 pre-commit = "*"
+pytest = "^8.0.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: hits real job boards over the network (deselected by default)",
+]
+addopts = "-m 'not live'"
