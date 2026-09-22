@@ -76,3 +76,23 @@ def test_translates_query_terms(term, expected):
 )
 def test_bm_job_types_resolve(value, expected):
     assert get_enum_from_job_type(value) == expected
+
+
+def test_multiword_result_is_not_retranslated():
+    # "operator" is also a standalone key; the multi-word result must not be re-read.
+    assert to_bm_query("production operator") == "operator pengeluaran"
+
+
+def test_fixed_offset_phrase_wins_over_relative_pattern():
+    # Text matching BOTH mechanisms: the fixed phrase must win.
+    assert parse_bm_relative_date("hari ini, bukan 3 hari lepas", today=TODAY) == date(
+        2026, 9, 22
+    )
+
+
+def test_detect_interval_prefers_the_longest_matching_phrase(monkeypatch):
+    from jobspy.malaysia import language
+
+    # Inject a shorter key that would win under dict order but must lose on length.
+    monkeypatch.setitem(language._EN_INTERVAL_WORDS, "month", "weekly")
+    assert language.detect_interval("paid per month") == "monthly"

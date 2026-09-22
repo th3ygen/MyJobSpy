@@ -146,16 +146,22 @@ def to_bm_query(term: str | None) -> str | None:
         return None
 
     normalized = re.sub(r"\s+", " ", term.strip().lower())
+    tokens = normalized.split(" ")
+    longest_key = max(len(key.split(" ")) for key in EN_TO_BM_QUERY_TERMS)
 
-    # Multi-word entries first, so 'security guard' is not split into 'guard'.
-    for phrase, translation in sorted(
-        EN_TO_BM_QUERY_TERMS.items(), key=lambda item: -len(item[0])
-    ):
-        if " " in phrase and phrase in normalized:
-            normalized = normalized.replace(phrase, translation)
+    out: list[str] = []
+    i = 0
+    while i < len(tokens):
+        # Longest phrase first, so "security guard" is never split into "guard".
+        for size in range(min(longest_key, len(tokens) - i), 0, -1):
+            phrase = " ".join(tokens[i : i + size])
+            if phrase in EN_TO_BM_QUERY_TERMS:
+                out.append(EN_TO_BM_QUERY_TERMS[phrase])
+                i += size
+                break
+        else:
+            out.append(tokens[i])
+            i += 1
 
-    tokens = [EN_TO_BM_QUERY_TERMS.get(token, token) for token in normalized.split(" ")]
-    translated = " ".join(tokens)
-    return (
-        translated if translated != re.sub(r"\s+", " ", term.strip().lower()) else None
-    )
+    translated = " ".join(out)
+    return translated if translated != normalized else None
