@@ -38,16 +38,19 @@ class JobType(Enum):
         "tamzamanlı",
         "повназайнятість",
         "toànthờigian",
+        "sepenuhmasa",
     )
-    PART_TIME = ("parttime", "teilzeit", "částečnýúvazek", "deltid")
-    CONTRACT = ("contract", "contractor")
-    TEMPORARY = ("temporary",)
+    PART_TIME = ("parttime", "teilzeit", "částečnýúvazek", "deltid", "separuhmasa")
+    CONTRACT = ("contract", "contractor", "kontrak")
+    TEMPORARY = ("temporary", "sementara")
     INTERNSHIP = (
         "internship",
         "prácticas",
         "ojt(onthejobtraining)",
         "praktikum",
         "praktik",
+        "latihanindustri",
+        "praktikal",
     )
 
     PER_DIEM = ("perdiem",)
