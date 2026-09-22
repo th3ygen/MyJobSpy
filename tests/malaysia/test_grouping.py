@@ -48,6 +48,144 @@ def test_exact_dedup_keeps_the_most_complete_record(make_job):
     assert kept[0].description == "Full description here"
 
 
+# Real job_url shapes, copied from how each scraper in this repo actually
+# builds them. Half of the boards put the listing id in the *query string*,
+# which a canonicalizer that drops the query collapses onto one key. Every
+# other fixture in this file is path-distinguished, which is exactly why the
+# collapse went unnoticed.
+_REAL_BOARD_URLS = {
+    # jobspy/indeed/__init__.py: f'{self.base_url}/viewjob?jk={job["key"]}'
+    "indeed": (
+        "https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60001",
+        "https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60002",
+    ),
+    # jobspy/glassdoor/__init__.py: f"{self.base_url}job-listing/j?jl={job_id}"
+    "glassdoor": (
+        "https://www.glassdoor.com/job-listing/j?jl=1009412345",
+        "https://www.glassdoor.com/job-listing/j?jl=1009498765",
+    ),
+    # jobspy/ziprecruiter/__init__.py: f"{self.base_url}/jobs//j?lvk={listing_key}"
+    "ziprecruiter": (
+        "https://www.ziprecruiter.com/jobs//j?lvk=9f1c2a7b0001",
+        "https://www.ziprecruiter.com/jobs//j?lvk=9f1c2a7b0002",
+    ),
+    # jobspy/bdjobs/__init__.py: an href carrying ?jobid=
+    "bdjobs": (
+        "https://jobs.bdjobs.com/jobdetails.asp?id=1301234&ln=1",
+        "https://jobs.bdjobs.com/jobdetails.asp?id=1309876&ln=1",
+    ),
+    # jobspy/linkedin/__init__.py: f"{self.base_url}/jobs/view/{job_id}"
+    # (path-distinguished - the shape that always worked)
+    "linkedin": (
+        "https://www.linkedin.com/jobs/view/4012345678",
+        "https://www.linkedin.com/jobs/view/4087654321",
+    ),
+}
+
+
+@pytest.mark.parametrize("board", sorted(_REAL_BOARD_URLS))
+def test_exact_dedup_keeps_distinct_listings_on_every_board_shape(make_job, board):
+    """Two different listings must never collapse into one row, whatever
+    part of the URL the board encodes identity in."""
+    first, second = _REAL_BOARD_URLS[board]
+
+    jobs = [make_job(job_url=first), make_job(job_url=second)]
+
+    assert len(dedupe_exact(jobs)) == 2
+
+
+def test_exact_dedup_survives_tracking_params_on_a_query_id_url(make_job):
+    """Stripping tracking noise must not require stripping the whole query:
+    the same Indeed listing with a campaign tag is still one listing."""
+    jobs = [
+        make_job(job_url="https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60001"),
+        make_job(
+            job_url=(
+                "https://malaysia.indeed.com/viewjob"
+                "?jk=a1b2c3d4e5f60001&utm_source=email&utm_campaign=weekly"
+            )
+        ),
+        make_job(
+            job_url=(
+                "https://malaysia.indeed.com/viewjob"
+                "?jk=a1b2c3d4e5f60001&gclid=Cj0KCQiA&fbclid=IwAR1"
+            )
+        ),
+    ]
+
+    assert len(dedupe_exact(jobs)) == 1
+
+
+def test_exact_dedup_prefers_the_board_assigned_id(make_job):
+    """Every scraper stamps a site-prefixed board id on JobPost.id. When it
+    is present it is the identity - the same listing reached by two
+    different URLs is still one listing."""
+    jobs = [
+        make_job(
+            id="in-a1b2c3d4e5f60001",
+            job_url="https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60001",
+        ),
+        make_job(
+            id="in-a1b2c3d4e5f60001",
+            job_url="https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60001&from=serp",
+        ),
+    ]
+
+    assert len(dedupe_exact(jobs)) == 1
+
+
+def test_exact_dedup_never_merges_distinct_board_ids(make_job):
+    jobs = [
+        make_job(
+            id="in-a1b2c3d4e5f60001", job_url="https://malaysia.indeed.com/viewjob"
+        ),
+        make_job(
+            id="in-a1b2c3d4e5f60002", job_url="https://malaysia.indeed.com/viewjob"
+        ),
+        make_job(id="li-4012345678", job_url="https://malaysia.indeed.com/viewjob"),
+    ]
+
+    assert len(dedupe_exact(jobs)) == 3
+
+
+def test_a_batch_of_query_id_listings_is_not_collapsed(make_job):
+    """The reported failure in miniature: a page of Indeed results is 25
+    listings distinguished only by ?jk=."""
+    jobs = [
+        make_job(job_url=f"https://malaysia.indeed.com/viewjob?jk=deadbeef{n:04d}")
+        for n in range(25)
+    ]
+
+    assert len(dedupe_exact(jobs)) == 25
+
+
+def test_unresolved_fallback_ids_differ_for_two_unrelated_listings(make_job):
+    """F17: 'unresolved' is not evidence two postings are the same. Two
+    query-id listings that cannot be resolved must not share a
+    dedup_group."""
+    unresolved = Location(city="Somewhere Weird", state=None, country=Country.MALAYSIA)
+    jobs = [
+        make_job(
+            job_url="https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60001",
+            company_name=None,
+            title="Software Engineer",
+            location=unresolved,
+        ),
+        make_job(
+            job_url="https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f60002",
+            company_name=None,
+            title="Data Analyst",
+            location=unresolved,
+        ),
+    ]
+
+    grouped = assign_groups(jobs)
+
+    assert grouped[0].dedup_group is not None
+    assert grouped[1].dedup_group is not None
+    assert grouped[0].dedup_group != grouped[1].dedup_group
+
+
 def test_groups_same_job_across_boards(make_job):
     jobs = [
         make_job(job_url="https://a/1", title="Software Engineer", location=_my()),

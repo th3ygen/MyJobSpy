@@ -6,7 +6,7 @@ import logging
 import pytest
 
 import jobspy
-from jobspy.model import JobResponse, Site
+from jobspy.model import JobResponse
 
 
 def test_country_indeed_defaults_to_malaysia():
@@ -345,6 +345,79 @@ def test_include_remote_noop_is_not_logged_when_is_remote_already_set(
 
     messages = [record.getMessage() for record in caplog.records]
     assert not any("include_remote=True has no effect" in m for m in messages)
+
+
+def test_a_page_of_query_id_listings_survives_the_pipeline(monkeypatch, make_job):
+    """Every other fake in this file returns exactly one job, and a 1-in/1-out
+    board cannot exhibit a dedup collapse at any aggressiveness. This one
+    returns a whole page of Indeed-shaped listings - identity in ?jk=, nothing
+    else distinguishing them - and every one of them must reach the frame."""
+
+    class PageScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(
+                jobs=[
+                    make_job(
+                        id=f"in-a1b2c3d4e5f6{n:04d}",
+                        title=f"Software Engineer {n}",
+                        job_url=(
+                            f"https://malaysia.indeed.com/viewjob?jk=a1b2c3d4e5f6{n:04d}"
+                        ),
+                    )
+                    for n in range(20)
+                ]
+            )
+
+    monkeypatch.setattr(jobspy, "Indeed", PageScraper, raising=False)
+
+    df = jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="malaysia",
+        # Both passes return the same 20 listings, so this also pins the other
+        # half of dedup's contract: the overlap between the located and remote
+        # passes must still collapse, 40 raw rows back down to 20.
+        include_remote=True,
+        results_wanted=20,
+    )
+
+    assert len(df) == 20
+    assert df["job_url"].nunique() == 20
+
+
+def test_a_page_of_path_id_listings_survives_the_pipeline(monkeypatch, make_job):
+    """The LinkedIn shape (identity in the path) as a control - it always
+    worked, and must keep working."""
+
+    class PageScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            return JobResponse(
+                jobs=[
+                    make_job(
+                        id=f"li-40123456{n:02d}",
+                        title=f"Data Analyst {n}",
+                        job_url=f"https://www.linkedin.com/jobs/view/40123456{n:02d}",
+                    )
+                    for n in range(20)
+                ]
+            )
+
+    monkeypatch.setattr(jobspy, "LinkedIn", PageScraper, raising=False)
+
+    df = jobspy.scrape_jobs(
+        site_name=["linkedin"],
+        search_term="analyst",
+        country_indeed="malaysia",
+        results_wanted=20,
+    )
+
+    assert len(df) == 20
 
 
 def test_default_sites_are_malaysia_relevant():

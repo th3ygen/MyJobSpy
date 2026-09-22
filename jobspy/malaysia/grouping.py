@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from rapidfuzz import fuzz
 
@@ -148,11 +148,107 @@ def _normalize_title(title: str | None) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+# Query parameters dropped before a URL is used as an identity key.
+#
+# Deliberately a short denylist, not an allowlist, because the two mistakes
+# are not symmetric: keeping a noise parameter costs one duplicate row,
+# while dropping an identity parameter silently destroys real listings.
+# Half the boards in this repo put the listing id in the query string -
+# Indeed ?jk=, Glassdoor ?jl=, ZipRecruiter ?lvk=, BDJobs ?jobid= - so
+# anything not proven to be noise stays.
+#
+# Every entry below is an industry-standard analytics or ad-click token,
+# minted per click/campaign/session and never used as a record key:
+#   utm_*            Urchin campaign tags (utm_source/medium/campaign/...)
+#   gclid/dclid/
+#   gbraid/wbraid    Google Ads click identifiers
+#   fbclid           Meta click identifier
+#   msclkid          Microsoft Ads click identifier
+#   ttclid/twclid/
+#   igshid           TikTok / X / Instagram click and share identifiers
+#   yclid            Yandex click identifier
+#   mc_cid/mc_eid    Mailchimp campaign and recipient identifiers
+#   _ga/_gl          Google Analytics cross-domain linker, regenerated
+#                    on every request
+#
+# Notably NOT stripped: from, src, ref, source, sid, trk, tk, vjk. These
+# look like navigation noise but are ambiguous - some boards use them as
+# record keys - and the board id below is the primary key anyway, so the
+# worst case for keeping them is a missed dedup rather than lost data.
+_TRACKING_PARAM_PREFIXES = ("utm_",)
+_TRACKING_PARAMS = frozenset(
+    {
+        "gclid",
+        "dclid",
+        "gbraid",
+        "wbraid",
+        "fbclid",
+        "msclkid",
+        "ttclid",
+        "twclid",
+        "igshid",
+        "yclid",
+        "mc_cid",
+        "mc_eid",
+        "_ga",
+        "_gl",
+    }
+)
+
+
+def _is_tracking_param(name: str) -> bool:
+    lowered = name.lower()
+    return lowered in _TRACKING_PARAMS or lowered.startswith(_TRACKING_PARAM_PREFIXES)
+
+
 def _canonical_url(url: str | None) -> str:
+    """Normalizes a job URL for use as an identity key.
+
+    Strips tracking parameters (see _TRACKING_PARAMS) and nothing else. The
+    rest of the query string is preserved: it is where Indeed, Glassdoor,
+    ZipRecruiter and BDJobs each encode the listing id, so discarding it
+    canonicalizes an entire board onto one key.
+
+    Remaining parameters are sorted so the same listing reached with its
+    query in a different order still canonicalizes identically.
+    """
     if not url:
         return ""
     parts = urlsplit(url)
-    return urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/"), "", ""))
+    kept = [
+        (name, value)
+        for name, value in parse_qsl(parts.query, keep_blank_values=True)
+        if not _is_tracking_param(name)
+    ]
+    kept.sort(key=lambda item: item[0])
+    return urlunsplit(
+        (
+            parts.scheme,
+            parts.netloc.lower(),
+            parts.path.rstrip("/"),
+            urlencode(kept),
+            "",
+        )
+    )
+
+
+def _identity_key(job: JobPost) -> str:
+    """Returns what makes this posting itself, or "" when nothing does.
+
+    Prefers the board-assigned id. Every scraper in this repo stamps one,
+    site-prefixed and derived from the board's own record key ("in-<jk>",
+    "li-<id>", "gd-<listingId>", "zr-<listing_key>", "nk-<jobId>",
+    "go-<id>", "bayt-<...>"; BDJobs uses the bare numeric jobid, which
+    cannot collide with a prefixed one). That is exact, stable between the
+    located and remote passes, and immune to every question about which
+    query parameters carry identity - notably Naukri's jdURL, which
+    carries a per-request session id that would defeat URL-keyed dedup.
+
+    Falls back to the normalized URL for posts built without an id.
+    """
+    if job.id:
+        return f"id:{job.id}"
+    return _canonical_url(job.job_url)
 
 
 def _completeness(job: JobPost) -> int:
@@ -181,11 +277,7 @@ def dedupe_exact(jobs: list[JobPost]) -> list[JobPost]:
     for job in jobs:
         # Never fall back to a shared constant - a batch of jobs with no url
         # and no id would otherwise collapse into a single row.
-        key = (
-            _canonical_url(job.job_url)
-            or (f"id:{job.id}" if job.id else "")
-            or f"obj:{id(job)}"
-        )
+        key = _identity_key(job) or f"obj:{id(job)}"
         if key not in best:
             best[key] = job
             order.append(key)
@@ -245,12 +337,21 @@ def _fallback_group_id(job: JobPost) -> str:
     under == to any consumer that doesn't specifically route through
     pandas.groupby(dropna=True) - indistinguishable from an actual match.
 
-    Derived from the same canonical-url normalization dedupe_exact uses, so
-    the same listing scraped again tomorrow gets the same id. Two different
+    Derived from the same _identity_key dedupe_exact uses, so the same
+    listing scraped again tomorrow gets the same id. Two different
     unresolved listings get different ids - "unresolved" is not evidence
-    they are the same posting.
+    they are the same posting. That property is the whole point of this
+    function, and it depends on _identity_key preserving what actually
+    distinguishes two listings: when the key discarded the query string,
+    every Indeed posting hashed to one shared "unresolved" id.
+
+    A post carrying neither an id nor a URL has no stable identity to
+    derive from, so it falls back to object identity: unique within the
+    run (which is what the no-collision guarantee needs) but not
+    reproducible across runs, which is the honest answer when the posting
+    offers nothing reproducible to key on.
     """
-    key = _canonical_url(job.job_url) or (job.id or "")
+    key = _identity_key(job) or f"obj:{id(job)}"
     return hashlib.blake2s(
         f"unresolved|{key}".encode("utf-8"), digest_size=6
     ).hexdigest()
