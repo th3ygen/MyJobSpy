@@ -209,3 +209,28 @@ def test_remote_pass_is_skipped_when_is_remote_already_set(monkeypatch, make_job
     )
 
     assert passes == [True]
+
+
+def test_non_malaysia_country_does_not_double_rows(monkeypatch, make_job):
+    passes = []
+
+    class RecordingScraper:
+        def __init__(self, **kwargs):
+            pass
+
+        def scrape(self, scraper_input):
+            passes.append(scraper_input.is_remote)
+            return JobResponse(jobs=[make_job(job_url="https://ok/1")])
+
+    monkeypatch.setattr(jobspy, "Indeed", RecordingScraper, raising=False)
+
+    df = jobspy.scrape_jobs(
+        site_name=["indeed"],
+        search_term="engineer",
+        country_indeed="usa",
+        include_remote=True,
+        results_wanted=1,
+    )
+
+    assert passes == [False]  # only the located pass ran
+    assert len(df) == 1  # and therefore no doubling

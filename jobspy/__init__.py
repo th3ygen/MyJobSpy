@@ -115,10 +115,12 @@ def scrape_jobs(
 
     site_to_jobs_dict: dict[str, JobResponse] = {}
 
-    # The located pass and the remote pass overlap heavily; exact dedup in the
-    # Malaysia pipeline absorbs the duplicates.
+    # The located pass and the remote pass overlap heavily, and the exact-dedup
+    # step that absorbs that overlap only runs for Malaysia. Tie the second pass
+    # to the same condition so the two can never come apart: issuing two passes
+    # without the dedup behind them returns every listing twice.
     passes: list[ScraperInput] = [scraper_input]
-    if include_remote and not is_remote:
+    if include_remote and not is_remote and country_enum == Country.MALAYSIA:
         remote_input = scraper_input.model_copy(deep=True)
         remote_input.is_remote = True
         passes.append(remote_input)
