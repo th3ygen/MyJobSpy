@@ -140,7 +140,12 @@ def test_two_jobs_with_unresolved_state_are_not_grouped(make_job):
     """normalize_location (Task 7) sets state=None when it cannot resolve a
     location. Two jobs both carrying state=None, neither remote, must not be
     treated as location-compatible - "both unknown" is not evidence of "same
-    place."."""
+    place." Each still gets its own stable, per-row dedup_group (derived
+    from its canonical url) rather than a shared None sentinel: dedup_group
+    must be uniform across every row so "is this a duplicate?" is always
+    answered by group size, and a shared None would compare equal under
+    ==, which is indistinguishable from an actual match to any consumer
+    that isn't specifically routing through pandas.groupby(dropna=True)."""
     unresolved = Location(city="Somewhere Weird", state=None, country=Country.MALAYSIA)
     jobs = [
         make_job(job_url="https://a/1", title="Software Engineer", location=unresolved),
@@ -149,8 +154,9 @@ def test_two_jobs_with_unresolved_state_are_not_grouped(make_job):
 
     grouped = assign_groups(jobs)
 
-    assert grouped[0].dedup_group is None
-    assert grouped[1].dedup_group is None
+    assert grouped[0].dedup_group is not None
+    assert grouped[1].dedup_group is not None
+    assert grouped[0].dedup_group != grouped[1].dedup_group
 
 
 # --- Real-data regression tests -------------------------------------------
@@ -229,9 +235,6 @@ def test_normalize_company_real_world_shapes():
         normalize_company("ASIAN BIOSCIENCE CORPORATION SDN BHD")
         == "asian bioscience corporation"
     )
-    # "(M)" is a Malaysia marker in parentheses; stripping punctuation leaves
-    # a stray "m" token after the "sdn bhd" suffix is removed. See report for
-    # the decision on this residue.
     assert normalize_company("ARRK Engineering GmbH") == "arrk engineering"
     assert normalize_company("Gen Digital Inc.") == "gen digital"
     assert (
@@ -243,6 +246,33 @@ def test_normalize_company_real_world_shapes():
 
 
 def test_normalize_company_conspec_parenthesised_malaysia_marker():
+    # "(M)" is a Malaysia marker in parentheses; stripping punctuation leaves
+    # a stray "m" token after the "sdn bhd" suffix is removed. See report for
+    # the decision on this residue.
     result = normalize_company("Conspec Builders (M) Sdn Bhd")
     # Whatever residue policy is chosen, the company's identity must survive.
     assert "conspec builders" in result
+
+
+def test_unresolved_fallback_group_id_is_stable_across_runs(make_job):
+    """The per-row fallback id for unresolvable rows (see
+    test_two_jobs_with_unresolved_state_are_not_grouped) must be derived
+    from something stable, not e.g. object identity or a per-batch counter -
+    otherwise the same listing scraped again tomorrow gets a different id
+    and can never be recognized as already seen."""
+
+    def build():
+        unresolved = Location(
+            city="Somewhere Weird", state=None, country=Country.MALAYSIA
+        )
+        return [
+            make_job(
+                job_url="https://a/1", title="Software Engineer", location=unresolved
+            )
+        ]
+
+    first = assign_groups(build())[0].dedup_group
+    second = assign_groups(build())[0].dedup_group
+
+    assert first is not None
+    assert first == second

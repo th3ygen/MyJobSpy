@@ -159,13 +159,15 @@ def _location_key(job: JobPost) -> str | None:
     location is unresolved.
 
     An unresolved, non-remote job (state=None - see Task 7's
-    normalize_location) must never be stamped with a group, even alone: the
-    hash is keyed on this value, so if it fell back to a shared placeholder,
-    two unrelated jobs that both have unknown locations would collide onto
-    the same dedup_group. That would be the same "both unknown is not
-    evidence of same place" mistake _compatible_location already guards
-    against, just committed at hash-construction time instead of
-    comparison time.
+    normalize_location) must never share a hashed group with another job on
+    this basis, even a fellow unresolved one: the hash is keyed on this
+    value, so if it fell back to a shared placeholder, two unrelated jobs
+    that both have unknown locations would collide onto the same
+    dedup_group. That would be the same "both unknown is not evidence of
+    same place" mistake _compatible_location already guards against, just
+    committed at hash-construction time instead of comparison time. Callers
+    that get None back must stamp the job with a per-row fallback id
+    instead (see _fallback_group_id), not leave dedup_group unset.
     """
     if job.is_remote:
         return "remote"
@@ -177,6 +179,27 @@ def _group_id(company: str, title: str, location_key: str) -> str:
     return hashlib.blake2s(canonical.encode("utf-8"), digest_size=6).hexdigest()
 
 
+def _fallback_group_id(job: JobPost) -> str:
+    """Per-row id for a job whose company or location cannot be resolved
+    into a canonical identity.
+
+    dedup_group's contract is uniform across every row: every job always
+    carries an id, and "is this row a duplicate?" is answered by group
+    size, never by a None sentinel. A shared None would compare equal
+    under == to any consumer that doesn't specifically route through
+    pandas.groupby(dropna=True) - indistinguishable from an actual match.
+
+    Derived from the same canonical-url normalization dedupe_exact uses, so
+    the same listing scraped again tomorrow gets the same id. Two different
+    unresolved listings get different ids - "unresolved" is not evidence
+    they are the same posting.
+    """
+    key = _canonical_url(job.job_url) or (job.id or "")
+    return hashlib.blake2s(
+        f"unresolved|{key}".encode("utf-8"), digest_size=6
+    ).hexdigest()
+
+
 def assign_groups(jobs: list[JobPost], *, threshold: int = 90) -> list[JobPost]:
     """Stamps every job whose identity resolves with a dedup_group id, shared
     by any other job judged to be the same posting.
@@ -184,9 +207,11 @@ def assign_groups(jobs: list[JobPost], *, threshold: int = 90) -> list[JobPost]:
     Non-destructive: every input job is returned, whether or not it shares a
     group with anything else. Tuned conservative - a missed group costs one
     duplicate row, a wrong group asserts that two distinct openings are the
-    same job. dedup_group is left as None for jobs with an unresolved
-    company or an unresolved, non-remote location, since there is no
-    canonical identity to hash (see _location_key).
+    same job. Every job always receives a dedup_group: one with an
+    unresolved company or an unresolved, non-remote location gets a
+    per-row fallback id (see _fallback_group_id) rather than being left at
+    None, so the field's contract - "duplicate-ness is answered by group
+    size" - holds uniformly for every row.
     """
     blocks: dict[str, list[JobPost]] = {}
     for job in jobs:
@@ -194,6 +219,8 @@ def assign_groups(jobs: list[JobPost], *, threshold: int = 90) -> list[JobPost]:
 
     for company, members in blocks.items():
         if not company:
+            for job in members:
+                job.dedup_group = _fallback_group_id(job)
             continue
 
         clusters: list[list[JobPost]] = []
@@ -224,8 +251,14 @@ def assign_groups(jobs: list[JobPost], *, threshold: int = 90) -> list[JobPost]:
             leader = cluster[0]
             location_key = _location_key(leader)
             if location_key is None:
-                # Unresolved location: never stamp, even a lone job (see
-                # _location_key). Leaves dedup_group at its default of None.
+                # Unresolved location: _compatible_location guarantees such
+                # a cluster is always a singleton (it never accepts a
+                # second member), so give this one job its own stable
+                # fallback id rather than a shared group hash - there is no
+                # canonical (company, title, state) triple to hash, and no
+                # evidence any other row is the same posting.
+                for job in cluster:
+                    job.dedup_group = _fallback_group_id(job)
                 continue
             group = _group_id(company, _normalize_title(leader.title), location_key)
             for job in cluster:
