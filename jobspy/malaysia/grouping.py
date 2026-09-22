@@ -1,0 +1,234 @@
+from __future__ import annotations
+
+import hashlib
+import re
+from urllib.parse import urlsplit, urlunsplit
+
+from rapidfuzz import fuzz
+
+from jobspy.model import JobPost
+
+_COMPANY_SUFFIXES = (
+    "sdn bhd",
+    "sdn. bhd.",
+    "bhd",
+    "berhad",
+    "pte ltd",
+    "pte. ltd.",
+    "pvt ltd",
+    "ltd",
+    "llc",
+    "inc",
+    "plc",
+    "gmbh",
+    "co",
+)
+
+# Words that mark a rank rather than a role. Two titles carrying different
+# markers are different jobs and must never share a group - this is checked
+# before similarity scoring, because set-based similarity gets it backwards:
+# token_set_ratio("senior software engineer", "software engineer") == 100.
+_SENIORITY_MARKERS = (
+    "intern",
+    "internship",
+    "trainee",
+    "graduate",
+    "junior",
+    "jr",
+    "senior",
+    "snr",
+    "sr",
+    "lead",
+    "principal",
+    "staff",
+    "head",
+    "manager",
+    "director",
+    "vp",
+    "chief",
+)
+
+
+def normalize_company(name: str | None) -> str:
+    """Strips corporate suffixes and country tags so one company forms one block."""
+    if not name:
+        return ""
+
+    lowered = name.lower()
+    # "(M)" is a common Malaysian-subsidiary marker, e.g. "Conspec Builders
+    # (M) Sdn Bhd". Drop it before punctuation stripping turns it into a
+    # stray "m" token that would otherwise survive suffix removal.
+    lowered = re.sub(r"\(\s*m\s*\)", " ", lowered)
+    text = re.sub(r"[^a-z0-9 ]+", " ", lowered)
+    text = re.sub(r"\s+", " ", text).strip()
+
+    changed = True
+    while changed:
+        changed = False
+        for suffix in _COMPANY_SUFFIXES:
+            if text.endswith(" " + suffix) or text == suffix:
+                text = text[: -len(suffix)].strip()
+                changed = True
+        if text.endswith(" malaysia"):
+            text = text[: -len(" malaysia")].strip()
+            changed = True
+
+    return text
+
+
+def seniority_markers(title: str | None) -> frozenset[str]:
+    """Returns the rank words present in a title."""
+    if not title:
+        return frozenset()
+
+    tokens = set(re.findall(r"[a-z]+", title.lower()))
+    return frozenset(marker for marker in _SENIORITY_MARKERS if marker in tokens)
+
+
+def _normalize_title(title: str | None) -> str:
+    if not title:
+        return ""
+    text = re.sub(r"[^a-z0-9 ]+", " ", title.lower())
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _canonical_url(url: str | None) -> str:
+    if not url:
+        return ""
+    parts = urlsplit(url)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/"), "", ""))
+
+
+def _completeness(job: JobPost) -> int:
+    """Higher is richer. Used to pick a winner among exact duplicates."""
+    score = 0
+    if job.description:
+        score += 2
+    if job.compensation:
+        score += 2
+    if job.date_posted:
+        score += 1
+    if job.job_url_direct:
+        score += 1
+    return score
+
+
+def dedupe_exact(jobs: list[JobPost]) -> list[JobPost]:
+    """Removes listings that are literally the same posting seen twice.
+
+    This is the only destructive step in the pipeline. It exists because the
+    location and remote query passes overlap heavily.
+    """
+    best: dict[str, JobPost] = {}
+    order: list[str] = []
+
+    for job in jobs:
+        # Never fall back to a shared constant - a batch of jobs with no url
+        # and no id would otherwise collapse into a single row.
+        key = (
+            _canonical_url(job.job_url)
+            or (f"id:{job.id}" if job.id else "")
+            or f"obj:{id(job)}"
+        )
+        if key not in best:
+            best[key] = job
+            order.append(key)
+        elif _completeness(job) > _completeness(best[key]):
+            best[key] = job
+
+    return [best[key] for key in order]
+
+
+def _state_of(job: JobPost) -> str | None:
+    if job.location is None:
+        return None
+    return job.location.state
+
+
+def _compatible_location(left: JobPost, right: JobPost) -> bool:
+    left_state, right_state = _state_of(left), _state_of(right)
+    if left.is_remote or right.is_remote:
+        return True
+    if left_state is None or right_state is None:
+        return False
+    return left_state == right_state
+
+
+def _location_key(job: JobPost) -> str | None:
+    """Returns the location bucket for the group hash, or None when the job's
+    location is unresolved.
+
+    An unresolved, non-remote job (state=None - see Task 7's
+    normalize_location) must never be stamped with a group, even alone: the
+    hash is keyed on this value, so if it fell back to a shared placeholder,
+    two unrelated jobs that both have unknown locations would collide onto
+    the same dedup_group. That would be the same "both unknown is not
+    evidence of same place" mistake _compatible_location already guards
+    against, just committed at hash-construction time instead of
+    comparison time.
+    """
+    if job.is_remote:
+        return "remote"
+    return _state_of(job)
+
+
+def _group_id(company: str, title: str, location_key: str) -> str:
+    canonical = f"{company}|{title}|{location_key}"
+    return hashlib.blake2s(canonical.encode("utf-8"), digest_size=6).hexdigest()
+
+
+def assign_groups(jobs: list[JobPost], *, threshold: int = 90) -> list[JobPost]:
+    """Stamps every job whose identity resolves with a dedup_group id, shared
+    by any other job judged to be the same posting.
+
+    Non-destructive: every input job is returned, whether or not it shares a
+    group with anything else. Tuned conservative - a missed group costs one
+    duplicate row, a wrong group asserts that two distinct openings are the
+    same job. dedup_group is left as None for jobs with an unresolved
+    company or an unresolved, non-remote location, since there is no
+    canonical identity to hash (see _location_key).
+    """
+    blocks: dict[str, list[JobPost]] = {}
+    for job in jobs:
+        blocks.setdefault(normalize_company(job.company_name), []).append(job)
+
+    for company, members in blocks.items():
+        if not company:
+            continue
+
+        clusters: list[list[JobPost]] = []
+        for job in sorted(
+            members, key=lambda j: (_normalize_title(j.title), j.job_url or "")
+        ):
+            title = _normalize_title(job.title)
+            markers = seniority_markers(job.title)
+
+            placed = False
+            for cluster in clusters:
+                leader = cluster[0]
+                if markers != seniority_markers(leader.title):
+                    continue
+                if not _compatible_location(job, leader):
+                    continue
+                if (
+                    fuzz.token_sort_ratio(title, _normalize_title(leader.title))
+                    >= threshold
+                ):
+                    cluster.append(job)
+                    placed = True
+                    break
+            if not placed:
+                clusters.append([job])
+
+        for cluster in clusters:
+            leader = cluster[0]
+            location_key = _location_key(leader)
+            if location_key is None:
+                # Unresolved location: never stamp, even a lone job (see
+                # _location_key). Leaves dedup_group at its default of None.
+                continue
+            group = _group_id(company, _normalize_title(leader.title), location_key)
+            for job in cluster:
+                job.dedup_group = group
+
+    return jobs
