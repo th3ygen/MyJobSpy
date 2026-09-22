@@ -12,8 +12,12 @@ _OTHER_COUNTRY_PATTERNS = (
     r"\bmust (?:be|reside) (?:located |based )?in the (?:us|usa|united states|uk)\b",
     r"\bus[- ]only\b",
     r"\bus[- ]based only\b",
-    r"\b(?:est|pst|cst|pdt|edt)\b",
-    r"\bgmt[+-](?:4|5|6|7|8)?\b(?=.*\b(?:us|america)\b)",
+    # Unambiguous US timezone abbreviations only. "est" is excluded deliberately:
+    # it collides with "est." (established), and "cst" with other common usages.
+    # A missed US-timezone hint costs far less than a false exclusion, because
+    # this field sorts rather than filters.
+    r"\b(?:pst|pdt|edt|cdt)\b",
+    r"\b(?:eastern|pacific|central|mountain)\s+(?:standard\s+|daylight\s+)?time\b",
 )
 
 _MY_PATTERNS = (
@@ -30,7 +34,6 @@ _APAC_PATTERNS = (
     r"\bsea region\b",
     r"\bsingapore\b",
     r"\bgmt\+8\b",
-    r"\bsgt\b",
 )
 
 _GLOBAL_PATTERNS = (

@@ -19,7 +19,10 @@ def test_non_remote_job_has_no_scope(make_job):
         ("Must have US work authorization.", "other_country"),
         ("We are a fast-growing startup.", "unknown"),
         ("You will work GMT+8 hours.", "apac"),
-        ("Core hours are EST.", "other_country"),
+        # "Core hours are EST." now returns unknown to avoid false exclusions like
+        # "est. 1998". A missed EST timezone hint costs less than falsely excluding
+        # established dates, since this field sorts rather than filters.
+        ("Core hours are EST.", "unknown"),
     ],
 )
 def test_classifies_from_description(make_job, description, expected):
@@ -63,3 +66,29 @@ def test_missing_description_with_malaysian_location_returns_my(make_job):
     )
 
     assert classify_remote_scope(job) == "my"
+
+
+def test_established_abbreviation_is_not_a_us_timezone(make_job):
+    job = make_job(
+        is_remote=True,
+        description="TechCorp, est. 1998, is hiring for a fully remote role based in Malaysia.",
+    )
+    assert classify_remote_scope(job) == "my"
+
+
+def test_contact_us_boilerplate_is_not_the_united_states(make_job):
+    job = make_job(
+        is_remote=True,
+        description="Work hours: GMT+8. Contact us for more info about this Kuala Lumpur based role.",
+    )
+    assert classify_remote_scope(job) == "my"
+
+
+def test_sergeant_abbreviation_is_not_singapore_time(make_job):
+    job = make_job(
+        is_remote=True,
+        title="Security Sgt - Overnight Remote Monitoring",
+        description="Remote monitoring role.",
+        location=None,
+    )
+    assert classify_remote_scope(job) == "unknown"
