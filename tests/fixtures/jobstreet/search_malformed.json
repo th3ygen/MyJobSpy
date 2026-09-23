@@ -1,0 +1,91 @@
+{
+  "data": [
+    {
+      "id": "90000001",
+      "title": "No Company Anywhere",
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY"
+        }
+      ],
+      "listingDate": "2026-09-20T01:02:03Z",
+      "workTypes": [
+        "Full time"
+      ]
+    },
+    {
+      "id": "90000002",
+      "title": "Empty Locations",
+      "companyName": "Acme Sdn Bhd",
+      "locations": [],
+      "listingDate": "2026-09-20T01:02:03Z",
+      "workTypes": [
+        "Full time"
+      ]
+    },
+    {
+      "id": "90000003",
+      "title": "Missing Locations Key",
+      "companyName": "Acme Sdn Bhd",
+      "listingDate": "2026-09-20T01:02:03Z",
+      "workTypes": [
+        "Full time"
+      ]
+    },
+    {
+      "id": "90000004",
+      "title": "Nulls And Junk",
+      "companyName": null,
+      "salaryLabel": "Negotiable",
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY"
+        }
+      ],
+      "listingDate": "2026-09-20T01:02:03Z",
+      "workTypes": [
+        "Permanent"
+      ]
+    },
+    {
+      "id": "90000005",
+      "title": "Bad Date",
+      "companyName": "Acme Sdn Bhd",
+      "listingDate": "not-a-date",
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY"
+        }
+      ],
+      "workArrangements": {
+        "data": []
+      }
+    },
+    {
+      "id": "90000006",
+      "title": "Three Part Location",
+      "companyName": "Acme Sdn Bhd",
+      "locations": [
+        {
+          "label": "Bayan Lepas, Bayan Baru, Penang",
+          "countryCode": "MY"
+        }
+      ],
+      "listingDate": "2026-09-20T01:02:03Z",
+      "workTypes": [
+        "Full time"
+      ]
+    }
+  ],
+  "totalCount": 6,
+  "searchParams": {
+    "keywords": "software engineer",
+    "page": "1",
+    "sitekey": "MY-Main",
+    "sourcesystem": "houston",
+    "where": "Kuala Lumpur"
+  }
+}

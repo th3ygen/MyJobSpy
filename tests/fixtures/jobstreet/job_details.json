@@ -1,0 +1,10 @@
+{
+  "data": {
+    "jobDetails": {
+      "job": {
+        "title": "Software Developer",
+        "content": "<p>Responsibilities:</p><p><br></p><p>1. Develop and maintain web applications using Laravel and PHP</p><p>2. Build backend features, admin panels, CRUD modules, and APIs</p><p>3. Work with MySQL or PostgreSQL databases</p><p>4. Fix bugs and improve existing systems</p><p>5. Assist with frontend integration using Blade, HTML, CSS, JavaScript, jQuery, or Bootstrap</p><p>6. Write clean, readable, and maintainable code , follow current sturcture</p><p>7. Use Git for version control</p><p>8. Work closely with the team to complete assigned tasks</p><p><br></p><p>Requirements:</p><p><br></p><p>1. Minimum 6 months of hands-on Laravel development experience</p><p>2. Basic understanding of Laravel MVC, routes, controllers, models, migrations, and Blade</p><p>3. Basic knowledge of MySQL or PostgreSQL</p><p>4. Familiar with HTML, CSS, JavaScript, and jQuery</p><p>5. Able to debug errors and read Laravel logs</p><p>6. Responsible, willing to learn, and able to follow instructions</p><p>7. Good problem-solving attitude</p></p>"
+      }
+    }
+  }
+}

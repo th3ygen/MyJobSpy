@@ -1,0 +1,199 @@
+{
+  "data": [
+    {
+      "id": "94462128",
+      "title": "Software Developer",
+      "advertiser": {
+        "id": "",
+        "description": "Private Advertiser"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-07T07:19:42Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "3",
+            "label": {
+              "text": "Remote"
+            }
+          }
+        ],
+        "displayText": "Remote"
+      },
+      "salaryLabel": "RM 4,000 – RM 5,500 per month",
+      "teaser": "We are hiring Junior Laravel/PHP Developer in Malaysia ! Develop web applications, build backend features & APIs using Laravel, PHP & MySQL/PostgreSQL",
+      "branding": {},
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "Flexible & Remote-First Work Culture",
+        "Attractive Incentives & Rewards",
+        "Growth-Focused & Supportive Environment"
+      ]
+    },
+    {
+      "id": "94689504",
+      "title": "Software Engineer",
+      "companyName": "Property 213",
+      "advertiser": {
+        "id": "60713687",
+        "description": "PROPERTY 213 SDN. BHD."
+      },
+      "employer": {
+        "id": "657373",
+        "name": "Property 213",
+        "companyId": "168552547660070",
+        "companyUrl": "https://my.jobstreet.com/companies/property-213-168552547660070"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-17T02:22:58Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "1",
+            "label": {
+              "text": "On-site"
+            }
+          }
+        ]
+      },
+      "salaryLabel": "RM 5,000 – RM 7,500 per month",
+      "teaser": "Expert software engineer sought for cutting-edge tech solutions. Grow your skills and impact in Kuala Lumpur.",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/8cef9fa5-e058-4f64-84e4-5571effe4f6b.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "We provide outstanding learning opportunity",
+        "Pioneer Property Technology Company in Malaysia",
+        "Warm working environment & Walking distance to MRT"
+      ]
+    },
+    {
+      "id": "94234551",
+      "title": "Software Quality Assurance Engineer (Payment testing）",
+      "companyName": "Bytecenture Consulting",
+      "advertiser": {
+        "id": "61957054",
+        "description": "Bytecenture Consulting Sdn Bhd"
+      },
+      "employer": {
+        "id": "647146",
+        "name": "Bytecenture Consulting",
+        "companyId": "169225349499716",
+        "companyUrl": "https://my.jobstreet.com/companies/bytecenture-consulting-169225349499716"
+      },
+      "locations": [
+        {
+          "label": "Kepong, Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kepong Kuala Lumpur"
+            },
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-08-27T04:26:33Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "2",
+            "label": {
+              "text": "Hybrid"
+            }
+          }
+        ],
+        "displayText": "Hybrid"
+      },
+      "salaryLabel": "RM 4,700 – RM 7,000 per month",
+      "teaser": "Responsible for manual functional testing, localization testing, UI/UX and user experience validation, payment flow testing, and performance testing.",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/d3ffee02-6fac-4439-be45-3578aacedea5.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6301",
+            "description": "Testing & Quality Assurance"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "Opportunity to grow regionally with the Company",
+        "Exposure to platforms supporting > 1 billion active users",
+        "Positive working culture"
+      ]
+    }
+  ],
+  "totalCount": 1264,
+  "searchParams": {
+    "keywords": "software engineer",
+    "page": "1",
+    "sitekey": "MY-Main",
+    "sourcesystem": "houston",
+    "where": "Kuala Lumpur"
+  },
+  "location": {
+    "description": "Kuala Lumpur",
+    "type": "State",
+    "whereId": "1000190"
+  }
+}

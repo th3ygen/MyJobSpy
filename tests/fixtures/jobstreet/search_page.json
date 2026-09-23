@@ -1,0 +1,507 @@
+{
+  "data": [
+    {
+      "id": "94462128",
+      "title": "Software Developer",
+      "advertiser": {
+        "id": "",
+        "description": "Private Advertiser"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-07T07:19:42Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "3",
+            "label": {
+              "text": "Remote"
+            }
+          }
+        ],
+        "displayText": "Remote"
+      },
+      "salaryLabel": "RM 4,000 – RM 5,500 per month",
+      "teaser": "We are hiring Junior Laravel/PHP Developer in Malaysia ! Develop web applications, build backend features & APIs using Laravel, PHP & MySQL/PostgreSQL",
+      "branding": {},
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "Flexible & Remote-First Work Culture",
+        "Attractive Incentives & Rewards",
+        "Growth-Focused & Supportive Environment"
+      ]
+    },
+    {
+      "id": "94689504",
+      "title": "Software Engineer",
+      "companyName": "Property 213",
+      "advertiser": {
+        "id": "60713687",
+        "description": "PROPERTY 213 SDN. BHD."
+      },
+      "employer": {
+        "id": "657373",
+        "name": "Property 213",
+        "companyId": "168552547660070",
+        "companyUrl": "https://my.jobstreet.com/companies/property-213-168552547660070"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-17T02:22:58Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "1",
+            "label": {
+              "text": "On-site"
+            }
+          }
+        ]
+      },
+      "salaryLabel": "RM 5,000 – RM 7,500 per month",
+      "teaser": "Expert software engineer sought for cutting-edge tech solutions. Grow your skills and impact in Kuala Lumpur.",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/8cef9fa5-e058-4f64-84e4-5571effe4f6b.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "We provide outstanding learning opportunity",
+        "Pioneer Property Technology Company in Malaysia",
+        "Warm working environment & Walking distance to MRT"
+      ]
+    },
+    {
+      "id": "94234551",
+      "title": "Software Quality Assurance Engineer (Payment testing）",
+      "companyName": "Bytecenture Consulting",
+      "advertiser": {
+        "id": "61957054",
+        "description": "Bytecenture Consulting Sdn Bhd"
+      },
+      "employer": {
+        "id": "647146",
+        "name": "Bytecenture Consulting",
+        "companyId": "169225349499716",
+        "companyUrl": "https://my.jobstreet.com/companies/bytecenture-consulting-169225349499716"
+      },
+      "locations": [
+        {
+          "label": "Kepong, Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kepong Kuala Lumpur"
+            },
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-08-27T04:26:33Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "2",
+            "label": {
+              "text": "Hybrid"
+            }
+          }
+        ],
+        "displayText": "Hybrid"
+      },
+      "salaryLabel": "RM 4,700 – RM 7,000 per month",
+      "teaser": "Responsible for manual functional testing, localization testing, UI/UX and user experience validation, payment flow testing, and performance testing.",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/d3ffee02-6fac-4439-be45-3578aacedea5.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6301",
+            "description": "Testing & Quality Assurance"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "Opportunity to grow regionally with the Company",
+        "Exposure to platforms supporting > 1 billion active users",
+        "Positive working culture"
+      ]
+    },
+    {
+      "id": "94830903",
+      "title": "Associate Software Support Engineer",
+      "companyName": "DZH International",
+      "advertiser": {
+        "id": "60173411",
+        "description": "DZH International Sdn Bhd"
+      },
+      "employer": {
+        "id": "381153",
+        "name": "DZH International",
+        "companyId": "168555914244100",
+        "companyUrl": "https://my.jobstreet.com/companies/dzh-international-168555914244100"
+      },
+      "locations": [
+        {
+          "label": "Bukit Bintang, Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Bukit Bintang Kuala Lumpur"
+            },
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-23T07:45:28Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "2",
+            "label": {
+              "text": "Hybrid"
+            }
+          }
+        ],
+        "displayText": "Hybrid"
+      },
+      "salaryLabel": "",
+      "teaser": "Be the tech hero behind the scenes! Solve real-world problems, support top-tier clients, and grow your skills in a fast-paced fintech environment!",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/4b939700-b8e9-4299-bdc4-82b4451643c7.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "Support award-winning systems trusted by top brokerages and international banks",
+        "Work with a close-knit team that values learning & collaboration",
+        "Birthday & study leave and other perks designed to support your well-being"
+      ]
+    },
+    {
+      "id": "94831259",
+      "title": "Software Engineer - Payment Gateway",
+      "companyName": "Coherentplus",
+      "advertiser": {
+        "id": "60179246",
+        "description": "COHERENTPLUS SDN. BHD."
+      },
+      "employer": {
+        "id": "647916",
+        "name": "Coherentplus",
+        "companyId": "168551976065377",
+        "companyUrl": "https://my.jobstreet.com/companies/coherentplus-168551976065377"
+      },
+      "locations": [
+        {
+          "label": "Cheras, Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Cheras Kuala Lumpur"
+            },
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-23T07:55:42Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "1",
+            "label": {
+              "text": "On-site"
+            }
+          }
+        ]
+      },
+      "salaryLabel": "",
+      "teaser": "Build secure, scalable payment solutions and shape the future of digital payments with our innovative team.",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/93695cf7-03a9-4e6c-887b-591416ffe86a.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": []
+    },
+    {
+      "id": "94586568",
+      "title": "Software Engineer Intern",
+      "companyName": "Electronic Arts",
+      "advertiser": {
+        "id": "61941066",
+        "description": "Electronic Arts"
+      },
+      "employer": {
+        "id": "1266",
+        "name": "Electronic Arts",
+        "companyId": "176550567995844",
+        "companyUrl": "https://my.jobstreet.com/companies/electronic-arts-176550567995844"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur City Centre, Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur City Centre Kuala Lumpur"
+            },
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-11T18:05:59Z",
+      "workTypes": [
+        "Casual/Vacation",
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "1",
+            "label": {
+              "text": "On-site"
+            }
+          }
+        ]
+      },
+      "salaryLabel": "",
+      "teaser": "As a Software Engineer Intern on the FC Mobile team, you will dive into the technical foundation that powers the world’s most popular mobile...",
+      "branding": {},
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": []
+    },
+    {
+      "id": "94333139",
+      "title": "Java Developer Intern",
+      "companyName": "YONYOU",
+      "advertiser": {
+        "id": "63410174",
+        "description": "Yonyou (Malaysia) Sdn Bhd"
+      },
+      "employer": {
+        "id": "393413",
+        "name": "YONYOU",
+        "companyId": "168558587782456",
+        "companyUrl": "https://my.jobstreet.com/companies/yonyou-168558587782456"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur City Centre, Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur City Centre Kuala Lumpur"
+            },
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-01T05:45:31Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "1",
+            "label": {
+              "text": "On-site"
+            }
+          }
+        ]
+      },
+      "salaryLabel": "RM 1,000 per month",
+      "teaser": "Launch your tech career with hands-on Java development. Competitive pay, career growth, flexible work.",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/b91d2678-ea4d-4961-8b49-915aec42c140.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": []
+    },
+    {
+      "id": "94553263",
+      "title": "Software Engineer (Java & Full Stack Required) - Relocate to Singapore",
+      "companyName": "NCS Group",
+      "advertiser": {
+        "id": "60673861",
+        "description": "NCSI (Malaysia) Sdn Bhd"
+      },
+      "employer": {
+        "id": "367752",
+        "name": "NCS Group"
+      },
+      "locations": [
+        {
+          "label": "Kuala Lumpur",
+          "countryCode": "MY",
+          "seoHierarchy": [
+            {
+              "contextualName": "Kuala Lumpur"
+            }
+          ]
+        }
+      ],
+      "listingDate": "2026-09-10T09:19:17Z",
+      "workTypes": [
+        "Full time"
+      ],
+      "workArrangements": {
+        "data": [
+          {
+            "id": "1",
+            "label": {
+              "text": "On-site"
+            }
+          }
+        ]
+      },
+      "salaryLabel": "$5,000 – $7,000 per month",
+      "teaser": "Build cutting-edge full stack solutions with Java! Join a top AI Tech firm across Singapore!",
+      "branding": {
+        "serpLogoUrl": "https://bx-branding-gateway.cloud.seek.com.au/ad15c060-a31d-4577-b4f5-ecb46f145fa6.1/jdpLogo"
+      },
+      "classifications": [
+        {
+          "classification": {
+            "id": "6281",
+            "description": "Information & Communication Technology"
+          },
+          "subclassification": {
+            "id": "6287",
+            "description": "Developers/Programmers"
+          }
+        }
+      ],
+      "bulletPoints": [
+        "An opportunity to grow your tech career",
+        "Be a part of a Pan-Asia Technology Leader",
+        "Outstanding career development opportunities"
+      ]
+    }
+  ],
+  "totalCount": 1264,
+  "searchParams": {
+    "keywords": "software engineer",
+    "page": "1",
+    "sitekey": "MY-Main",
+    "sourcesystem": "houston",
+    "where": "Kuala Lumpur"
+  },
+  "location": {
+    "description": "Kuala Lumpur",
+    "type": "State",
+    "whereId": "1000190"
+  }
+}
