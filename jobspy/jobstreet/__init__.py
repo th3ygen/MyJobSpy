@@ -54,9 +54,17 @@ def _strip_country_suffix(where: str) -> str:
     silent empty result from JobStreet with no error, which reads as "no
     jobs found" rather than "your location string was not understood".
 
-    Only strips when a non-empty remainder survives: location="Malaysia" on
-    its own is a legitimate nationwide search and must not be reduced to an
-    empty `where`, which would silently change the query's meaning.
+    A bare country search, location="Malaysia", is untouched by construction:
+    _COUNTRY_SUFFIX_RE requires a leading comma, so it never matches a string
+    with no comma in it at all - that case never reaches the emptiness check
+    below.
+
+    The emptiness check is a separate, secondary guard for a degenerate
+    comma-with-no-city input (e.g. ", Malaysia"), where the regex matches the
+    entire string and a naive strip would reduce `where` to "". An empty
+    `where` is not "no location filter" to the board - it silently changes
+    what the query means - so that case is left as its original, unstripped
+    text instead.
     """
     stripped = _COUNTRY_SUFFIX_RE.sub("", where).strip()
     if stripped and stripped != where.strip():

@@ -203,12 +203,32 @@ class TestQueryParameters:
         """location="Malaysia" alone is a legitimate nationwide search - it
 
         must survive as "Malaysia", not be reduced to an empty `where`,
-        which would silently change what the query means.
+        which would silently change what the query means. This pins that
+        real behaviour, but is NOT a test of the emptiness guard in
+        _strip_country_suffix: _COUNTRY_SUFFIX_RE requires a leading comma,
+        so a comma-less string like this never matches the regex at all and
+        never reaches the emptiness check. See
+        test_does_not_reduce_a_comma_with_no_city_to_an_empty_where below
+        for the input that actually drives that branch.
         """
         scraper = make_scraper([load("search_page.json")])
         scraper.scrape(an_input(location="Malaysia"))
 
         assert scraper.session.calls[0]["params"]["where"] == "Malaysia"
+
+    def test_does_not_reduce_a_comma_with_no_city_to_an_empty_where(self):
+        """A comma with no city, ", Malaysia", is the input that actually
+
+        drives _strip_country_suffix's emptiness guard: the regex matches
+        the entire string, so a naive strip would leave `where=""` - which
+        is not "no location filter" to the board, it silently changes what
+        the query means. The guard leaves the original, unstripped text in
+        that case instead of emptying it.
+        """
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(location=", Malaysia"))
+
+        assert scraper.session.calls[0]["params"]["where"] == ", Malaysia"
 
 
 class TestDescriptions:
