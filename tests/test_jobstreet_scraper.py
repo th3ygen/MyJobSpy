@@ -169,6 +169,47 @@ class TestQueryParameters:
         assert "daterange" not in params
         assert "worktype" not in params
 
+    def test_strips_a_trailing_malaysia_suffix_from_where(self):
+        """This fork's documented location convention is "City, Malaysia" -
+
+        shared with Indeed and LinkedIn - but JobStreet's `where` does not
+        resolve that form and returns zero results for it. Left unhandled,
+        a user following the README gets a silent empty result.
+        """
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(location="Kuala Lumpur, Malaysia"))
+
+        assert scraper.session.calls[0]["params"]["where"] == "Kuala Lumpur"
+
+    def test_strips_a_trailing_my_suffix_from_where(self):
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(location="Kuala Lumpur, MY"))
+
+        assert scraper.session.calls[0]["params"]["where"] == "Kuala Lumpur"
+
+    def test_tolerates_whitespace_around_the_suffix(self):
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(location="Kuala Lumpur , Malaysia"))
+
+        assert scraper.session.calls[0]["params"]["where"] == "Kuala Lumpur"
+
+    def test_leaves_an_unsuffixed_location_untouched(self):
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(location="Kuala Lumpur"))
+
+        assert scraper.session.calls[0]["params"]["where"] == "Kuala Lumpur"
+
+    def test_does_not_strip_a_bare_country_search_to_empty(self):
+        """location="Malaysia" alone is a legitimate nationwide search - it
+
+        must survive as "Malaysia", not be reduced to an empty `where`,
+        which would silently change what the query means.
+        """
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(location="Malaysia"))
+
+        assert scraper.session.calls[0]["params"]["where"] == "Malaysia"
+
 
 class TestDescriptions:
     def test_teaser_is_used_when_descriptions_are_off(self):

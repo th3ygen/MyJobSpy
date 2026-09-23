@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
@@ -35,6 +36,35 @@ from jobspy.util import (
 )
 
 log = create_logger("JobStreet")
+
+# Matches a trailing ", Malaysia" or ", MY" (any case, tolerant of
+# surrounding whitespace) so it can be stripped before the value is sent as
+# `where`.
+_COUNTRY_SUFFIX_RE = re.compile(r",\s*(?:malaysia|my)\s*$", re.IGNORECASE)
+
+
+def _strip_country_suffix(where: str) -> str:
+    """Strips a trailing country suffix from a `where` value before it is sent.
+
+    JobStreet's `where` param does not resolve the "City, Country" form at
+    all - it returns zero results for e.g. "Kuala Lumpur, Malaysia" where
+    "Kuala Lumpur" alone returns real results - but "City, Malaysia" is this
+    fork's own documented location convention (README.md), shared with
+    Indeed and LinkedIn. Left unhandled, a user following the README gets a
+    silent empty result from JobStreet with no error, which reads as "no
+    jobs found" rather than "your location string was not understood".
+
+    Only strips when a non-empty remainder survives: location="Malaysia" on
+    its own is a legitimate nationwide search and must not be reduced to an
+    empty `where`, which would silently change the query's meaning.
+    """
+    stripped = _COUNTRY_SUFFIX_RE.sub("", where).strip()
+    if stripped and stripped != where.strip():
+        log.info(
+            f"stripped country suffix from location for JobStreet: {where!r} -> {stripped!r}"
+        )
+        return stripped
+    return where.strip()
 
 
 class JobStreet(Scraper):
@@ -81,7 +111,7 @@ class JobStreet(Scraper):
         if self.scraper_input.search_term:
             params["keywords"] = self.scraper_input.search_term
         if self.scraper_input.location:
-            params["where"] = self.scraper_input.location
+            params["where"] = _strip_country_suffix(self.scraper_input.location)
 
         if self.scraper_input.hours_old:
             # daterange is whole days. Round up so the window is never
