@@ -1,7 +1,27 @@
 from __future__ import annotations
 
-from jobspy.jobstreet.constant import JOBS_PER_PAGE, headers
-from jobspy.model import JobResponse, Scraper, ScraperInput, Site
+import math
+import random
+import time
+from datetime import date, timedelta
+
+from jobspy.jobstreet.constant import (
+    JOBS_PER_PAGE,
+    SEARCH_URL,
+    SITE_KEY,
+    SOURCE_SYSTEM,
+    WORK_TYPE_IDS,
+    headers,
+)
+from jobspy.jobstreet.util import parse_job
+from jobspy.model import (
+    Country,
+    JobPost,
+    JobResponse,
+    Scraper,
+    ScraperInput,
+    Site,
+)
 from jobspy.util import create_logger, create_session
 
 log = create_logger("JobStreet")
@@ -34,5 +54,106 @@ class JobStreet(Scraper):
         self.jobs_per_page = JOBS_PER_PAGE
         self.seen_ids: set[str] = set()
 
+    def _build_params(self, page: int) -> dict:
+        """Builds one search query.
+
+        Filters the board has no parameter for are left out entirely rather
+        than sent empty - an empty value is a filter, and would silently
+        narrow the search.
+        """
+        params: dict = {
+            "siteKey": SITE_KEY,
+            "sourcesystem": SOURCE_SYSTEM,
+            "page": page,
+            "pageSize": self.jobs_per_page,
+        }
+        if self.scraper_input.search_term:
+            params["keywords"] = self.scraper_input.search_term
+        if self.scraper_input.location:
+            params["where"] = self.scraper_input.location
+
+        if self.scraper_input.hours_old:
+            # daterange is whole days. Round up so the window is never
+            # narrower than asked for, then filter exactly in _within_age.
+            params["daterange"] = math.ceil(self.scraper_input.hours_old / 24)
+            # Newest-first lets paging stop as soon as it crosses the cutoff.
+            params["sortmode"] = "ListedDate"
+
+        work_type_id = WORK_TYPE_IDS.get(self.scraper_input.job_type)
+        if work_type_id:
+            params["worktype"] = work_type_id
+
+        return params
+
+    def _within_age(self, job: JobPost) -> bool:
+        """Applies the exact hours_old cutoff the day-granular filter cannot."""
+        if not self.scraper_input.hours_old or job.date_posted is None:
+            return True
+        cutoff = date.today() - timedelta(
+            days=math.ceil(self.scraper_input.hours_old / 24)
+        )
+        return job.date_posted >= cutoff
+
     def scrape(self, scraper_input: ScraperInput) -> JobResponse:
-        raise NotImplementedError("filled in by Task 4")
+        self.scraper_input = scraper_input
+        self.seen_ids = set()
+
+        if scraper_input.country and scraper_input.country != Country.MALAYSIA:
+            log.warning(
+                f"JobStreet is a Malaysian board and always queries MY; "
+                f"country={scraper_input.country.value[0]!r} is ignored. Note "
+                f"the Malaysian normalization pipeline only runs when "
+                f"country_indeed='malaysia'."
+            )
+        if scraper_input.distance:
+            log.info("JobStreet has no radius filter; distance is ignored")
+
+        wanted = scraper_input.results_wanted + scraper_input.offset
+        jobs: list[JobPost] = []
+        page = 1
+
+        while len(jobs) < wanted:
+            try:
+                response = self.session.get(
+                    SEARCH_URL,
+                    params=self._build_params(page),
+                    timeout=scraper_input.request_timeout,
+                )
+            except Exception as exc:  # noqa: BLE001 - one page must not kill the scrape
+                log.error(f"search request failed on page {page}: {exc}")
+                break
+
+            if response.status_code == 403:
+                # The board disallows this endpoint in robots.txt and sits
+                # behind Cloudflare. Treat a 403 as a block, not a blip -
+                # retrying into one is how an IP earns a permanent ban.
+                log.error("403 from JobStreet; stopping and returning partial results")
+                break
+            if response.status_code != 200:
+                log.error(f"JobStreet returned {response.status_code}; stopping")
+                break
+
+            records = (response.json() or {}).get("data") or []
+            if not records:
+                break
+
+            for record in records:
+                if record.get("id") in self.seen_ids:
+                    continue
+                self.seen_ids.add(record.get("id"))
+                job = parse_job(record)
+                if job is not None and self._within_age(job):
+                    jobs.append(job)
+
+            # A short page is the last page.
+            if len(records) < self.jobs_per_page:
+                break
+
+            page += 1
+            time.sleep(random.uniform(0.5, 1.5))
+
+        if scraper_input.is_remote:
+            jobs = [job for job in jobs if job.is_remote]
+
+        start = scraper_input.offset
+        return JobResponse(jobs=jobs[start : start + scraper_input.results_wanted])
