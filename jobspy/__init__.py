@@ -15,7 +15,7 @@ from jobspy.naukri import Naukri
 from jobspy.frame import build_jobs_dataframe
 from jobspy.malaysia import normalize as malaysia_normalize
 from jobspy.model import JobType, JobResponse, Country
-from jobspy.model import ScraperInput, Site
+from jobspy.model import Scraper, ScraperInput, Site
 from jobspy.util import (
     set_logger_level,
     create_logger,
@@ -30,7 +30,20 @@ log = create_logger("ScrapeJobs")
 # upstream and stay importable, but are not queried unless asked for by name.
 DEFAULT_SITES: list[Site] = [Site.INDEED, Site.LINKEDIN, Site.GOOGLE]
 
-# Update the SCRAPER_MAPPING dictionary in the scrape_jobs function
+# The board registry. Adding a scraper means adding a Site member, a package
+# under jobspy/, an exception class — and an entry here. Module level so the
+# contract test in tests/test_scraper_contract.py can check every registered
+# board without running a scrape.
+SCRAPER_MAPPING: dict[Site, type[Scraper]] = {
+    Site.LINKEDIN: LinkedIn,
+    Site.INDEED: Indeed,
+    Site.ZIP_RECRUITER: ZipRecruiter,
+    Site.GLASSDOOR: Glassdoor,
+    Site.GOOGLE: Google,
+    Site.BAYT: BaytScraper,
+    Site.NAUKRI: Naukri,
+    Site.BDJOBS: BDJobs,
+}
 
 
 def scrape_jobs(
@@ -74,16 +87,11 @@ def scrape_jobs(
         rather than returning doubled rows.
     :return: Pandas DataFrame containing job data
     """
-    SCRAPER_MAPPING = {
-        Site.LINKEDIN: globals()["LinkedIn"],
-        Site.INDEED: globals()["Indeed"],
-        Site.ZIP_RECRUITER: globals()["ZipRecruiter"],
-        Site.GLASSDOOR: globals()["Glassdoor"],
-        Site.GOOGLE: globals()["Google"],
-        Site.BAYT: globals()["BaytScraper"],
-        Site.NAUKRI: globals()["Naukri"],
-        Site.BDJOBS: globals()["BDJobs"],
-    }
+    # Resolved through globals() by name rather than read straight off the
+    # module-level registry: tests swap a board out with
+    # monkeypatch.setattr(jobspy, "Indeed", Fake), which only takes effect if
+    # the class is looked up per call.
+    scrapers = {site: globals()[cls.__name__] for site, cls in SCRAPER_MAPPING.items()}
     set_logger_level(verbose)
     job_type = get_enum_from_value(job_type) if job_type else None
 
@@ -121,7 +129,7 @@ def scrape_jobs(
     )
 
     def scrape_site(site: Site, site_input: ScraperInput) -> Tuple[str, JobResponse]:
-        scraper_class = SCRAPER_MAPPING[site]
+        scraper_class = scrapers[site]
         scraper = scraper_class(proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
         scraped_data: JobResponse = scraper.scrape(site_input)
         cap_name = site.value.capitalize()
