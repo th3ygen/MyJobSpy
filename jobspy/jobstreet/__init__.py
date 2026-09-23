@@ -122,12 +122,16 @@ class JobStreet(Scraper):
                 timeout=self.scraper_input.request_timeout,
             )
             payload = response.json() or {}
+            # payload is only guaranteed falsy-normalized above - a
+            # truthy-but-non-dict JSON root (a bare list, string, number)
+            # would make .get() raise below, so the traversal stays inside
+            # this same try: any shape of payload must be contained here.
+            job = ((payload.get("data") or {}).get("jobDetails") or {}).get("job") or {}
+            content = job.get("content")
         except Exception as exc:  # noqa: BLE001 - one description is not the batch
             log.warning(f"description fetch failed for {job_id}: {exc}")
             return None
 
-        job = ((payload.get("data") or {}).get("jobDetails") or {}).get("job") or {}
-        content = job.get("content")
         if not content:
             return None
 

@@ -214,3 +214,25 @@ class TestDescriptions:
 
         assert len(jobs) == 1
         assert jobs[0].description  # the teaser survived
+
+    def test_a_malformed_graphql_payload_leaves_the_teaser(self):
+        """A truthy-but-non-dict JSON root must not escape _fetch_description.
+
+        `payload.get(...)` only works on a dict; a bare list (or string, or
+        number) root is truthy, so `payload or {}` does not normalize it
+        away, and `.get("data")` would raise AttributeError if the
+        envelope traversal ever slipped outside the try/except.
+        """
+
+        class NonDictPayload(FakeSession):
+            def post(self, url, json=None, timeout=None, **kwargs):
+                self.calls.append({"url": url, "json": json})
+                return FakeResponse([1, 2, 3])
+
+        scraper = JobStreet()
+        scraper.session = NonDictPayload([load("search_page.json")])
+        scraper.fetch_description = True
+        jobs = scraper.scrape(an_input(results_wanted=1)).jobs
+
+        assert len(jobs) == 1
+        assert jobs[0].description  # the teaser survived
