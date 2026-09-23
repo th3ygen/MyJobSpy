@@ -10,6 +10,7 @@ from jobspy.bdjobs import BDJobs
 from jobspy.glassdoor import Glassdoor
 from jobspy.google import Google
 from jobspy.indeed import Indeed
+from jobspy.jobstreet import JobStreet
 from jobspy.linkedin import LinkedIn
 from jobspy.naukri import Naukri
 from jobspy.frame import build_jobs_dataframe
@@ -28,7 +29,12 @@ log = create_logger("ScrapeJobs")
 
 # Boards worth querying for a Malaysian search. The rest are inherited from
 # upstream and stay importable, but are not queried unless asked for by name.
-DEFAULT_SITES: list[Site] = [Site.INDEED, Site.LINKEDIN, Site.GOOGLE]
+DEFAULT_SITES: list[Site] = [
+    Site.INDEED,
+    Site.LINKEDIN,
+    Site.GOOGLE,
+    Site.JOBSTREET,
+]
 
 # The board registry. Adding a scraper means adding a Site member, a package
 # under jobspy/, an exception class — and an entry here. Module level so the
@@ -43,6 +49,7 @@ SCRAPER_MAPPING: dict[Site, type[Scraper]] = {
     Site.BAYT: BaytScraper,
     Site.NAUKRI: Naukri,
     Site.BDJOBS: BDJobs,
+    Site.JOBSTREET: JobStreet,
 }
 
 

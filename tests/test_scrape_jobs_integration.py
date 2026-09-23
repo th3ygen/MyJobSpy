@@ -423,7 +423,12 @@ def test_a_page_of_path_id_listings_survives_the_pipeline(monkeypatch, make_job)
 def test_default_sites_are_malaysia_relevant():
     from jobspy import DEFAULT_SITES
 
-    assert {site.value for site in DEFAULT_SITES} == {"indeed", "linkedin", "google"}
+    assert {site.value for site in DEFAULT_SITES} == {
+        "indeed",
+        "linkedin",
+        "google",
+        "jobstreet",
+    }
 
 
 def test_unsupported_board_still_works_when_named_explicitly(monkeypatch, make_job):
