@@ -13,6 +13,7 @@ class BaselineMetrics:
     total_rows: int = 0
     rows_per_site: dict[str, int] = field(default_factory=dict)
     salary_fill_rate: float = 0.0
+    salary_fill_rate_by_site: dict[str, float] = field(default_factory=dict)
     date_fill_rate: float = 0.0
     state_match_rate: float = 0.0
     remote_rate: float = 0.0
@@ -26,6 +27,22 @@ def _fill_rate(df: pd.DataFrame, column: str) -> float:
     if column not in df.columns or len(df) == 0:
         return 0.0
     return round(float(df[column].notna().sum()) / len(df), 4)
+
+
+def _fill_rate_by_site(df: pd.DataFrame, column: str) -> dict[str, float]:
+    """Per-site fill rate for `column`.
+
+    The overall fill rate blends boards with very different coverage into
+    one number - e.g. JobStreet publishes a structured salary field on
+    roughly half its postings while Indeed and LinkedIn direct-supply
+    essentially none, so a blended "salary fill rate" understates what
+    JobStreet actually contributes and cannot be cited as if it were
+    JobStreet's own number (see docs/baseline and the F4 fix-wave note).
+    """
+    if column not in df.columns or "site" not in df.columns or len(df) == 0:
+        return {}
+    rates = df.groupby("site")[column].apply(lambda s: float(s.notna().sum()) / len(s))
+    return {str(site): round(float(rate), 4) for site, rate in rates.items()}
 
 
 def _canonical_state_rate(df: pd.DataFrame) -> float:
@@ -89,6 +106,7 @@ def compute_metrics(df: pd.DataFrame, *, top_n: int = 25) -> BaselineMetrics:
         total_rows=total,
         rows_per_site=rows_per_site,
         salary_fill_rate=_fill_rate(df, "min_amount"),
+        salary_fill_rate_by_site=_fill_rate_by_site(df, "min_amount"),
         date_fill_rate=_fill_rate(df, "date_posted"),
         state_match_rate=_canonical_state_rate(df),
         remote_rate=remote_rate,
@@ -120,6 +138,21 @@ def render_report(metrics: BaselineMetrics, *, title: str) -> str:
     ]
     for site, count in sorted(metrics.rows_per_site.items()):
         lines.append(f"| {site} | {count} |")
+
+    lines += [
+        "",
+        "## Salary fill rate by site",
+        "",
+        "The headline salary fill rate above blends every board into one",
+        "number; boards with structured salary data (e.g. JobStreet) and",
+        "boards without it (Indeed, LinkedIn) read very differently site by",
+        "site.",
+        "",
+        "| Site | Fill rate |",
+        "|---|---|",
+    ]
+    for site, rate in sorted(metrics.salary_fill_rate_by_site.items()):
+        lines.append(f"| {site} | {rate:.1%} |")
 
     lines += ["", "## remote_scope distribution", "", "| Scope | Rows |", "|---|---|"]
     for scope, count in sorted(metrics.remote_scope_counts.items()):

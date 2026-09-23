@@ -33,11 +33,26 @@ def test_normalize_accepts_jobstreet_jobs_without_wiring(jobs):
 
 
 def test_board_salary_is_not_overwritten_by_the_description_parser(jobs):
-    """The board's own figure must win, and must not be relabelled."""
+    """The board's own figure must win, and must not be relabelled.
+
+    js-94689504's teaser deliberately contains a second, parseable MYR
+    figure ("RM 3,000 per month") that differs from its salaryLabel-derived
+    compensation (RM 5,000-7,500/month) - see
+    tests/fixtures/jobstreet/README.md. Without that, none of the fixture's
+    teasers contain a parseable figure at all, so deleting the guard this
+    test exists to cover (`if job.compensation is not None: return` in
+    jobspy/malaysia/__init__.py) would change neither assertion below and
+    this test would pass regardless of whether the guard is there.
+    """
     priced = [job for job in jobs if job.compensation is not None]
     assert priced, "fixture should contain salaried records"
 
     before = {job.id: job.compensation.min_amount for job in priced}
+    assert before["js-94689504"] == 5000, (
+        "fixture drifted: this test relies on js-94689504's board-supplied "
+        "figure (5000) differing from its teaser's RM 3,000"
+    )
+
     for job in normalize(list(jobs)):
         if job.id in before:
             assert job.compensation.min_amount == before[job.id]

@@ -152,6 +152,10 @@ class TestMalformedRecords:
         job = parse_job(bad["90000005"])
         assert job.date_posted is None
         assert job.title == "Bad Date"  # the job survives
+        # workArrangements.data == [] (as opposed to the key being absent
+        # entirely, as on every other record in this fixture) is its own
+        # branch in parse_is_remote and was previously asserted nowhere.
+        assert job.is_remote is None
 
     def test_three_part_location_label(self, bad):
         job = parse_job(bad["90000006"])

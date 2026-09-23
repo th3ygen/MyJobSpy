@@ -158,3 +158,41 @@ def test_empty_string_location_is_handled_like_a_miss():
     assert normalized.city == ""
     assert normalized.state is None
     assert unmatched is None
+
+
+# --- Delimiter handling in _key() -----------------------------------------
+#
+# A board may join the two words of a canonical name with "/", "&" or "-"
+# instead of a space (e.g. "Petaling-Jaya"). _key() maps those delimiters to
+# a space before stripping punctuation, so the words stay separated instead
+# of fusing into one unmatchable token ("petalingjaya").
+
+
+@pytest.mark.parametrize(
+    "raw_city",
+    ["Petaling-Jaya", "Petaling/Jaya", "Petaling&Jaya", "Petaling - Jaya"],
+)
+def test_delimiter_joined_two_word_city_resolves(raw_city):
+    normalized, unmatched = normalize_location(
+        Location(city=raw_city, country=Country.MALAYSIA)
+    )
+
+    assert normalized.city == "Petaling Jaya"
+    assert normalized.state == "Selangor"
+    assert unmatched is None
+
+
+def test_slash_joined_dual_locality_still_does_not_resolve():
+    """ "Klang/Port Klang" joins two independently-registered place names -
+    it is not one two-word name split by a delimiter. Even after the
+    delimiter is mapped to a space, "klang port klang" is not itself a
+    registered gazetteer key; only "Klang" and "Port Klang" are, separately.
+    Resolving a genuine dual-name label like this would need a
+    segment-by-segment fallback lookup, which is a larger change than the
+    delimiter fix in _key() and is deliberately not attempted here."""
+    normalized, unmatched = normalize_location(
+        Location(city="Klang/Port Klang", country=Country.MALAYSIA)
+    )
+
+    assert normalized.state is None
+    assert unmatched == "Klang/Port Klang"

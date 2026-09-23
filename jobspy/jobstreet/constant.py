@@ -26,10 +26,25 @@ JOBS_PER_PAGE = 100
 # costs one per hundred.
 DESCRIPTION_WORKERS = 5
 
+# Paging continues past a page whose raw record count is a full page even
+# when `is_remote` filters most or all of it out, because the loop counts
+# post-filter matches (see the scrape loop). Without a ceiling, a search for
+# is_remote=True with too few matching postings to ever reach
+# results_wanted would page all the way to the board's own result cap
+# (README: "~1000 jobs per search", i.e. ~10 pages at JOBS_PER_PAGE=100)
+# instead of giving up once further paging is clearly not paying off.
+MAX_REMOTE_PAGES = 20
+
 headers = {
     "accept": "application/json",
     "accept-language": "en-MY,en;q=0.9",
     "content-type": "application/json",
+    # A browser UA, matching every sibling scraper's convention. Sent to a
+    # Cloudflare-fronted endpoint; python-requests' default UA is a plausible
+    # contributor to the 403s this board is known to return under load.
+    # JobStreet.__init__ overrides this with the caller-supplied user_agent
+    # when one is given.
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 }
 
 # The board states work arrangement explicitly, which is better remote data
