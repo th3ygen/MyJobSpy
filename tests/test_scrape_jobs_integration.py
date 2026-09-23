@@ -446,3 +446,39 @@ def test_unsupported_board_still_works_when_named_explicitly(monkeypatch, make_j
     )
 
     assert len(df) == 1
+
+
+def test_jobstreet_fetch_description_reaches_the_scraper(monkeypatch):
+    """The kwarg is board-specific, so it is set after construction."""
+    seen = {}
+
+    class FakeJobStreet(jobspy.JobStreet):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+        def scrape(self, scraper_input):
+            seen["fetch_description"] = self.fetch_description
+            return JobResponse(jobs=[])
+
+    monkeypatch.setattr(jobspy, "JobStreet", FakeJobStreet, raising=False)
+
+    jobspy.scrape_jobs(
+        site_name=["jobstreet"],
+        search_term="engineer",
+        jobstreet_fetch_description=True,
+    )
+    assert seen["fetch_description"] is True
+
+
+def test_jobstreet_fetch_description_defaults_to_false(monkeypatch):
+    seen = {}
+
+    class FakeJobStreet(jobspy.JobStreet):
+        def scrape(self, scraper_input):
+            seen["fetch_description"] = self.fetch_description
+            return JobResponse(jobs=[])
+
+    monkeypatch.setattr(jobspy, "JobStreet", FakeJobStreet, raising=False)
+
+    jobspy.scrape_jobs(site_name=["jobstreet"], search_term="engineer")
+    assert seen["fetch_description"] is False

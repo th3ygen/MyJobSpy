@@ -69,6 +69,7 @@ def scrape_jobs(
     description_format: str = "markdown",
     linkedin_fetch_description: bool | None = False,
     linkedin_company_ids: list[int] | None = None,
+    jobstreet_fetch_description: bool = False,
     offset: int | None = 0,
     hours_old: int = None,
     enforce_annual_salary: bool = False,
@@ -92,6 +93,10 @@ def scrape_jobs(
         two passes' overlap runs only for country_indeed="malaysia", so this is a
         no-op (a single pass, same as include_remote=False) for other countries
         rather than returning doubled rows.
+    :param jobstreet_fetch_description: fetch each JobStreet job's full
+        description, at one extra request per job. Unlike LinkedIn, leaving
+        this off costs little salary coverage - JobStreet supplies salary
+        directly - so it mainly affects remote_scope and readability.
     :return: Pandas DataFrame containing job data
     """
     # Resolved through globals() by name rather than read straight off the
@@ -138,6 +143,10 @@ def scrape_jobs(
     def scrape_site(site: Site, site_input: ScraperInput) -> Tuple[str, JobResponse]:
         scraper_class = scrapers[site]
         scraper = scraper_class(proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
+        # Board-specific and not part of ScraperInput, which every board
+        # shares. Set by attribute so the shared contract stays unchanged.
+        if isinstance(scraper, JobStreet):
+            scraper.fetch_description = jobstreet_fetch_description
         scraped_data: JobResponse = scraper.scrape(site_input)
         cap_name = site.value.capitalize()
         site_display = "ZipRecruiter" if cap_name == "Zip_recruiter" else cap_name
