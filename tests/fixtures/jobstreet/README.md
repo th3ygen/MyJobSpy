@@ -20,8 +20,8 @@ Each covers a branch that real data actually exercises:
 | `94462128` | Remote, salaried — **and has no `companyName` key at all**, only `advertiser.description: "Private Advertiser"` |
 | `94689504` | On-site, salaried — the nominal case |
 | `94234551` | Hybrid, salaried |
-| `94830903` | No `salaryLabel` (the ~30% case) |
-| `94831259` | Suburb location label: `"Bukit Bintang, Kuala Lumpur"` |
+| `94830903` | No `salaryLabel` (the ~30% case) — suburb location label: `"Bukit Bintang, Kuala Lumpur"` |
+| `94831259` | Suburb location label: `"Cheras, Kuala Lumpur"` |
 | `94586568` | Two `workTypes` on one posting: `["Casual/Vacation", "Full time"]` |
 | `94333139` | Single-value salary: `"RM 1,000 per month"`, no range |
 | `94553263` | Advertiser junk: `"$5,000 – $7,000 per month"` typed with `$`, must parse to `None` |
