@@ -8,14 +8,22 @@ MyJobSpy is a fork of [cullenwatson/JobSpy](https://github.com/cullenwatson/JobS
 
 ## Commands
 
-Poetry project, Python ^3.10. There is **no test suite and no linter config beyond Black** — verification is done by actually running a scrape.
+Poetry project, Python ^3.10. Black (88 cols) is the only linter.
 
 ```bash
 poetry install                  # deps (dev group: jupyter, black, pre-commit)
 poetry run pre-commit install   # one-time; runs black --line-length=88 on commit
-poetry run black jobspy         # format (88 cols, enforced by pre-commit)
+poetry run pytest               # unit + integration, offline, ~2s
+poetry run black jobspy tests   # format (88 cols, enforced by pre-commit)
 poetry build                    # sdist/wheel
 ```
+
+Tests are offline and fast — run them. A `live` marker is configured and **deselected by default** (`addopts = "-m 'not live'"`) for tests that hit real boards; none exist yet, so live verification today means the baseline runner below or `examples/`.
+
+Two verification layers exist beyond unit tests:
+
+- **`tests/test_scraper_contract.py`** checks every board in `SCRAPER_MAPPING` offline — registered, subclasses `Scraper`, constructor takes `proxies`/`ca_cert`/`user_agent`, `self.site` matches its registry key, has an exception class. A new board should fail these until wired up correctly.
+- **`jobspy/baseline/`** measures a fixed search set against live boards and writes a markdown report to `docs/baseline/`. Run it (`poetry run python -m jobspy.baseline.runner`) before and after any change to normalization, and compare — the numbers, not intuition, are how this fork decides whether a change helped.
 
 Smoke-test a change to a scraper by running it directly with `verbose=2` so the per-site loggers print:
 
@@ -33,7 +41,25 @@ Note `.github/workflows/publish-to-pypi.yml` publishes to PyPI on push to `main`
 
 ## Architecture
 
-**Orchestration — `jobspy/__init__.py`.** `scrape_jobs()` is the single public entry point. It maps site strings → `Site` enum → scraper class (`SCRAPER_MAPPING`), runs every requested site in a `ThreadPoolExecutor` (one thread per site), then flattens each `JobPost` into a row and concatenates. Post-processing lives here, not in the scrapers: job-type joining, email joining, `Location.display_location()`, compensation flattening, `enforce_annual_salary` conversion, and column ordering via `util.desired_order`.
+**Orchestration — `jobspy/__init__.py`.** `scrape_jobs()` is the single public entry point. It maps site strings → `Site` enum → scraper class (module-level `SCRAPER_MAPPING`), runs every requested site in a `ThreadPoolExecutor` (one thread per site), normalizes, then hands off to `build_jobs_dataframe`. One board raising does not kill the run — the failure is logged and the other boards' results are returned.
+
+Note `scrape_jobs` resolves each scraper through `globals()[cls.__name__]` rather than reading `SCRAPER_MAPPING` directly. That is deliberate: tests swap a board out with `monkeypatch.setattr(jobspy, "Indeed", Fake)`, which only takes effect if the class is looked up per call.
+
+**DataFrame assembly — `jobspy/frame.py`.** `build_jobs_dataframe()` flattens `JobPost` → row: job-type joining, email joining, `Location.display_location()`, compensation flattening, `enforce_annual_salary` conversion, column ordering via `util.desired_order`. Extracted from `scrape_jobs` so the output schema is testable without a scrape (`tests/test_frame.py`).
+
+**Malaysia normalization — `jobspy/malaysia/`.** This is what the fork is *for*. `normalize(jobs, *, group_duplicates=True)` runs between scraping and DataFrame assembly, on `list[JobPost]`, so it is board-agnostic — a new scraper gets all of it free, with no per-board wiring:
+
+| Stage | Module | Does |
+|---|---|---|
+| location | `location.py` | 16-state enum, ~100-entry gazetteer, ISO 3166-2 `M01`–`M16` decode (Indeed emits codes, not state names). Nulls `state` on a miss. |
+| salary | `salary.py` | `parse_myr_salary` reads MYR pay out of description text, infers interval, applies sanity bands. Board-supplied `compensation` always wins. |
+| remote | `remote.py` | `classify_remote_scope` → `my` / `apac` / `global` / `unknown` from description signals. |
+| grouping | `grouping.py` | `dedupe_exact` collapses re-scrapes of one listing; `assign_groups` fuzzy-tags likely duplicates into a shared `dedup_group`. |
+
+Two properties to preserve when touching this:
+
+- **Each per-job stage is individually try/except'd**, counted, and logged as a per-stage rollup. One malformed posting must not abort the batch.
+- **Grouping tags, it does not merge.** `assign_groups` labels rows with a shared `dedup_group` id and removes nothing — that was an explicit product decision. `dedupe_exact` (which *does* remove) only ever collapses records of the same listing, keyed on `_identity_key`.
 
 **Contract — `jobspy/model.py`.** Every scraper subclasses `Scraper(ABC)` and implements `scrape(ScraperInput) -> JobResponse`. `ScraperInput` is the normalized query (search term, location, `Country`, distance, `hours_old`, `results_wanted`, `offset`, `description_format`, …); `JobResponse` wraps `list[JobPost]`. `JobPost` is one flat pydantic model shared by all sites — site-specific fields (LinkedIn `job_level`, Indeed company metadata, Naukri `skills`/`experience_range`) are optional fields on that one model rather than subclasses.
 
@@ -48,9 +74,10 @@ Note `.github/workflows/publish-to-pypi.yml` publishes to PyPI on push to `main`
 ## Gotchas
 
 - **`desired_order` is the output schema.** A new `JobPost` field will be silently dropped from the DataFrame unless it is added to `desired_order` in `jobspy/util.py`; list/enum-valued fields also need a flattening line in the row loop in `jobspy/__init__.py`.
-- **`extract_salary` is USA-only and USD-only.** The description-text salary fallback in `scrape_jobs` runs only when `country_enum == Country.USA`, and its regex only matches `$`. MY postings that state pay only in free text get empty `min_amount`/`max_amount` — MYR parsing is an open roadmap item, so don't assume it works.
-- **`user_agent` is accepted but ignored by every scraper except Glassdoor.** `scrape_jobs` passes it to all of them, but only Glassdoor forwards it to `super().__init__` and applies it to its headers. Indeed and ZipRecruiter likewise never set `self.ca_cert` (they pass the local param straight to `create_session`, so proxy CA certs still work). Wire the forwarding up when touching a scraper that needs it — don't assume `self.user_agent` is set.
-- **`__all__` in `jobspy/__init__.py` is `["BDJobs"]`** (leftover from an upstream PR). `from jobspy import scrape_jobs` works; `from jobspy import *` does not export it.
+- **`util.extract_salary` is USA-only and USD-only; MYR has its own parser.** The upstream description-text fallback runs only when `country_enum == Country.USA` and its regex only matches `$`. Malaysian postings are handled instead by `jobspy.malaysia.salary.parse_myr_salary`, inside the normalization pipeline. When a figure is parsed from text rather than supplied by the board, `salary_source` records that. Don't extend `extract_salary` for MY — extend the MY parser.
+- **Descriptions gate salary coverage.** `parse_myr_salary` reads the description, and LinkedIn returns one only when `linkedin_fetch_description=True` (one extra request per job). Leave it off and most LinkedIn pay data disappears — which looks like a parser regression but isn't.
+- **`_identity_key` prefers the board-stamped `JobPost.id`.** Every scraper stamps a site-prefixed id (`in-<jk>`, `li-<id>`, …), and exact dedup keys on it, falling back to a tracking-stripped URL. This matters: an earlier version keyed on a URL with the query string stripped, and since Indeed encodes job identity as `?jk=`, it collapsed the entire board to one row. A new scraper that forgets to stamp `id` degrades to the URL path — correct today, but stamp the id.
+- **`user_agent` is accepted but ignored by every scraper except Glassdoor.** `scrape_jobs` passes it to all of them, but only Glassdoor forwards it to `super().__init__`, so `self.user_agent` is `None` everywhere else. Indeed and ZipRecruiter likewise never set `self.ca_cert` (they pass the local param straight to `create_session`, so proxy CA certs still work). The seven offenders are grandfathered as `xfail` in `USER_AGENT_NOT_FORWARDED` in the contract test — **a new board must not join that list.**
 - **Filter exclusivity.** Indeed accepts only one of `hours_old` / (`job_type` + `is_remote`) / `easy_apply` per search; LinkedIn only one of `hours_old` / `easy_apply`. Scrapers encode this in their query building — check `constant.py` before adding a filter.
 - **Google Jobs is filtered solely by `google_search_term`**; `location`, `job_type` etc. do not narrow it.
 
@@ -58,6 +85,11 @@ Note `.github/workflows/publish-to-pypi.yml` publishes to PyPI on push to `main`
 
 1. Add the member to `Site` in `jobspy/model.py` (string value = what users pass in `site_name`; `map_str_to_site` does `Site[name.upper()]`).
 2. Create `jobspy/<site>/` with the `__init__.py` / `constant.py` / `util.py` split above; subclass `Scraper`, pass `proxies`, `ca_cert` **and** `user_agent` to `super().__init__`.
-3. Register it in `SCRAPER_MAPPING` in `jobspy/__init__.py` and add an exception class in `jobspy/exception.py`.
-4. Map the board's fields onto the existing `JobPost` fields wherever they fit; only add a new optional field (plus `desired_order` entry) when nothing fits.
-5. Respect `description_format` (`markdown_converter` / `plain_converter`), populate `Location(city=..., state=..., country=Country.MALAYSIA)`, and dedup via `seen_urls`.
+3. Register it in the module-level `SCRAPER_MAPPING` in `jobspy/__init__.py` and add a `<Board>Exception` in `jobspy/exception.py`.
+4. Stamp a site-prefixed `JobPost.id` from the board's own record key — dedup keys on it.
+5. Map the board's fields onto the existing `JobPost` fields wherever they fit; only add a new optional field (plus `desired_order` entry) when nothing fits.
+6. Respect `description_format` (`markdown_converter` / `plain_converter`), populate `Location(city=..., state=..., country=Country.MALAYSIA)`, and dedup via `seen_urls`.
+
+Then run `poetry run pytest tests/test_scraper_contract.py` — steps 1–3 are exactly what it checks, so it fails until they are done.
+
+Don't hand-normalize inside a scraper. Emit whatever the board gives you, in the board's own vocabulary, and let `jobspy/malaysia/` do the rest — that is the whole reason normalization is a separate pass. If the gazetteer or salary parser doesn't understand the new board's strings, fix them there, where every board benefits. Unmatched locations are logged at INFO (`unmatched locations - add to the gazetteer: …`) so a new board tells you what it needs; run a scrape at `verbose=2` and read that line.
