@@ -32,8 +32,25 @@ _GAZETTEER: dict[str, tuple[str | None, MalaysianState]] = {}
 
 
 def _key(text: str) -> str:
-    """Lowercases and strips punctuation so alias lookup is forgiving."""
-    return re.sub(r"[^a-z0-9 ]+", "", text.lower()).strip()
+    """Lowercases and strips punctuation so alias lookup is forgiving.
+
+    "/", "&" and "-" are mapped to a space *before* the stricter strip below
+    runs, because a board may use one of them where the canonical name has a
+    space (e.g. "Petaling-Jaya" for "Petaling Jaya"). Deleting them outright,
+    as a plain punctuation-strip would, fuses the two words into one token
+    ("petalingjaya") that cannot match the registered "petaling jaya" key.
+    Repeated whitespace is then collapsed, so a delimiter with spaces on
+    both sides ("Petaling - Jaya") does not leave a double space behind.
+
+    This does not make every slash-joined label resolve: "Klang/Port Klang"
+    joins two independently-registered places rather than splitting one
+    two-word name, so it becomes "klang port klang", which is itself not a
+    registered key even after this fix (see
+    tests/malaysia/test_location.py::test_slash_joined_dual_locality_still_does_not_resolve).
+    """
+    text = re.sub(r"[/&-]", " ", text.lower())
+    text = re.sub(r"[^a-z0-9 ]+", "", text)
+    return " ".join(text.split())
 
 
 def _add(city: str | None, state: MalaysianState, *aliases: str) -> None:

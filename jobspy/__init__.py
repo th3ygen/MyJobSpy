@@ -10,6 +10,7 @@ from jobspy.bdjobs import BDJobs
 from jobspy.glassdoor import Glassdoor
 from jobspy.google import Google
 from jobspy.indeed import Indeed
+from jobspy.jobstreet import JobStreet
 from jobspy.linkedin import LinkedIn
 from jobspy.naukri import Naukri
 from jobspy.frame import build_jobs_dataframe
@@ -28,7 +29,12 @@ log = create_logger("ScrapeJobs")
 
 # Boards worth querying for a Malaysian search. The rest are inherited from
 # upstream and stay importable, but are not queried unless asked for by name.
-DEFAULT_SITES: list[Site] = [Site.INDEED, Site.LINKEDIN, Site.GOOGLE]
+DEFAULT_SITES: list[Site] = [
+    Site.INDEED,
+    Site.LINKEDIN,
+    Site.GOOGLE,
+    Site.JOBSTREET,
+]
 
 # The board registry. Adding a scraper means adding a Site member, a package
 # under jobspy/, an exception class — and an entry here. Module level so the
@@ -43,6 +49,7 @@ SCRAPER_MAPPING: dict[Site, type[Scraper]] = {
     Site.BAYT: BaytScraper,
     Site.NAUKRI: Naukri,
     Site.BDJOBS: BDJobs,
+    Site.JOBSTREET: JobStreet,
 }
 
 
@@ -62,6 +69,7 @@ def scrape_jobs(
     description_format: str = "markdown",
     linkedin_fetch_description: bool | None = False,
     linkedin_company_ids: list[int] | None = None,
+    jobstreet_fetch_description: bool = False,
     offset: int | None = 0,
     hours_old: int = None,
     enforce_annual_salary: bool = False,
@@ -85,6 +93,10 @@ def scrape_jobs(
         two passes' overlap runs only for country_indeed="malaysia", so this is a
         no-op (a single pass, same as include_remote=False) for other countries
         rather than returning doubled rows.
+    :param jobstreet_fetch_description: fetch each JobStreet job's full
+        description, at one extra request per job. Unlike LinkedIn, leaving
+        this off costs little salary coverage - JobStreet supplies salary
+        directly - so it mainly affects remote_scope and readability.
     :return: Pandas DataFrame containing job data
     """
     # Resolved through globals() by name rather than read straight off the
@@ -131,6 +143,10 @@ def scrape_jobs(
     def scrape_site(site: Site, site_input: ScraperInput) -> Tuple[str, JobResponse]:
         scraper_class = scrapers[site]
         scraper = scraper_class(proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
+        # Board-specific and not part of ScraperInput, which every board
+        # shares. Set by attribute so the shared contract stays unchanged.
+        if isinstance(scraper, JobStreet):
+            scraper.fetch_description = jobstreet_fetch_description
         scraped_data: JobResponse = scraper.scrape(site_input)
         cap_name = site.value.capitalize()
         site_display = "ZipRecruiter" if cap_name == "Zip_recruiter" else cap_name

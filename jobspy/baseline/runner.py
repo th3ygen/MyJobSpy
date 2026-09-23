@@ -16,7 +16,7 @@ log = create_logger("Baseline")
 # runs is the entire point of the harness.
 SEARCHES: list[dict] = [
     {
-        "site_name": ["indeed", "linkedin", "google"],
+        "site_name": ["indeed", "linkedin", "google", "jobstreet"],
         "search_term": "software engineer",
         "google_search_term": "software engineer jobs in Kuala Lumpur Malaysia",
         "location": "Kuala Lumpur, Malaysia",
@@ -24,7 +24,7 @@ SEARCHES: list[dict] = [
         "results_wanted": 50,
     },
     {
-        "site_name": ["indeed", "linkedin", "google"],
+        "site_name": ["indeed", "linkedin", "google", "jobstreet"],
         "search_term": "data analyst",
         "google_search_term": "data analyst jobs in Selangor Malaysia",
         "location": "Selangor, Malaysia",
@@ -32,14 +32,14 @@ SEARCHES: list[dict] = [
         "results_wanted": 50,
     },
     {
-        "site_name": ["indeed", "linkedin"],
+        "site_name": ["indeed", "linkedin", "jobstreet"],
         "search_term": "admin assistant",
         "location": "Penang, Malaysia",
         "country_indeed": "malaysia",
         "results_wanted": 50,
     },
     {
-        "site_name": ["indeed", "linkedin"],
+        "site_name": ["indeed", "linkedin", "jobstreet"],
         "search_term": "software engineer",
         "location": "Malaysia",
         "country_indeed": "malaysia",
@@ -59,6 +59,10 @@ def run_baseline(output_path: Path, *, scrape=scrape_jobs) -> Path:
 
     for search in SEARCHES:
         label = f"{search['search_term']} @ {search.get('location', 'anywhere')}"
+        # verbose=2 so per-stage normalizer rollups and unmatched-location
+        # lines actually reach the log during a measurement run; the fixed
+        # search parameters above are untouched.
+        search = {**search, "verbose": search.get("verbose", 2)}
         try:
             df = scrape(**search)
         except Exception as exc:  # noqa: BLE001 - one bad search must not abort the run

@@ -84,6 +84,50 @@ def test_salary_fill_rate():
     assert compute_metrics(df).salary_fill_rate == 0.5
 
 
+def test_salary_fill_rate_by_site():
+    """The blended salary_fill_rate can hide a board with strong direct-data
+    coverage sitting alongside boards with essentially none - this is what
+    F4 asks metrics.py to surface per site instead."""
+    df = _frame(
+        [
+            # jobstreet: 2 of 2 priced -> 100%
+            ["jobstreet", "u1", "A", "X", "KL", None, None, None, 5000, False, None],
+            ["jobstreet", "u2", "B", "X", "KL", None, None, None, 6000, False, None],
+            # indeed: 0 of 2 priced -> 0%
+            ["indeed", "u3", "C", "X", "KL", None, None, None, None, False, None],
+            ["indeed", "u4", "D", "X", "KL", None, None, None, None, False, None],
+        ]
+    )
+
+    m = compute_metrics(df)
+
+    assert m.salary_fill_rate_by_site == {"indeed": 0.0, "jobstreet": 1.0}
+    # The blended rate (2 of 4) must not be mistaken for either site's own
+    # number - this is exactly the confusion F4 flags.
+    assert m.salary_fill_rate == 0.5
+
+
+def test_salary_fill_rate_by_site_is_empty_without_a_site_column():
+    df = pd.DataFrame({"min_amount": [5000, None]})
+
+    assert compute_metrics(df).salary_fill_rate_by_site == {}
+
+
+def test_render_report_includes_salary_fill_by_site():
+    df = _frame(
+        [
+            ["jobstreet", "u1", "A", "X", "KL", None, None, None, 5000, False, None],
+            ["indeed", "u2", "B", "X", "KL", None, None, None, None, False, None],
+        ]
+    )
+
+    report = render_report(compute_metrics(df), title="Baseline")
+
+    assert "## Salary fill rate by site" in report
+    assert "| indeed | 0.0% |" in report
+    assert "| jobstreet | 100.0% |" in report
+
+
 def test_counts_exact_duplicate_urls():
     df = _frame(
         [

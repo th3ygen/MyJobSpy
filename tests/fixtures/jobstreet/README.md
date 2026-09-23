@@ -20,8 +20,8 @@ Each covers a branch that real data actually exercises:
 | `94462128` | Remote, salaried — **and has no `companyName` key at all**, only `advertiser.description: "Private Advertiser"` |
 | `94689504` | On-site, salaried — the nominal case |
 | `94234551` | Hybrid, salaried |
-| `94830903` | No `salaryLabel` (the ~30% case) |
-| `94831259` | Suburb location label: `"Bukit Bintang, Kuala Lumpur"` |
+| `94830903` | No `salaryLabel` (the ~30% case) — suburb location label: `"Bukit Bintang, Kuala Lumpur"` |
+| `94831259` | Suburb location label: `"Cheras, Kuala Lumpur"` |
 | `94586568` | Two `workTypes` on one posting: `["Casual/Vacation", "Full time"]` |
 | `94333139` | Single-value salary: `"RM 1,000 per month"`, no range |
 | `94553263` | Advertiser junk: `"$5,000 – $7,000 per month"` typed with `$`, must parse to `None` |
@@ -29,6 +29,17 @@ Each covers a branch that real data actually exercises:
 Salary strings retain their original **non-breaking spaces (` `)** and
 **en-dashes (`–`)**. Do not "clean" these — reproducing them is the point,
 since they are what the live board sends.
+
+`94689504`'s `teaser` was hand-edited (2026-09-23, fix wave F7) to append
+"Entry-level hires may start from RM 3,000 per month." — a deliberate
+deviation from the raw capture. Every other teaser in this fixture set
+contains no parseable MYR figure at all, which made
+`test_board_salary_is_not_overwritten_by_the_description_parser` in
+`tests/test_jobstreet_pipeline.py` pass regardless of whether the
+board-wins guard it claims to test was even present. `94689504`'s
+`salaryLabel` (RM 5,000-7,500/month) and its teaser's RM 3,000 now
+genuinely disagree, so removing the guard changes the parsed amount and the
+test can actually fail.
 
 `solMetadata` and `tracking` were stripped. They are per-request tokens that
 change on every capture, which would make fixture diffs unreadable, and no
