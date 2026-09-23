@@ -168,3 +168,49 @@ class TestQueryParameters:
 
         assert "daterange" not in params
         assert "worktype" not in params
+
+
+class TestDescriptions:
+    def test_teaser_is_used_when_descriptions_are_off(self):
+        """The field is never empty: the teaser ships with the search result."""
+        scraper = make_scraper([load("search_page.json")])
+        jobs = scraper.scrape(an_input(results_wanted=1)).jobs
+
+        assert jobs[0].description
+        assert all(call["url"].endswith("/search") for call in scraper.session.calls)
+
+    def test_no_graphql_calls_when_descriptions_are_off(self):
+        scraper = make_scraper([load("search_page.json")])
+        scraper.scrape(an_input(results_wanted=3))
+
+        assert not [c for c in scraper.session.calls if c["url"].endswith("/graphql")]
+
+    def test_fetches_and_converts_descriptions_when_on(self):
+        scraper = make_scraper([load("search_page.json")])
+        scraper.fetch_description = True
+        jobs = scraper.scrape(an_input(results_wanted=2)).jobs
+
+        graphql = [c for c in scraper.session.calls if c["url"].endswith("/graphql")]
+        assert len(graphql) == 2
+        # _add_descriptions runs on a ThreadPoolExecutor with 5 workers, so
+        # the order calls land in scraper.session.calls is nondeterministic.
+        # Compare the set of requested ids rather than positional order.
+        requested = {c["json"]["variables"]["jobId"] for c in graphql}
+        assert requested == {job.id.removeprefix("js-") for job in jobs}
+        # markdown_converter ran: the fixture body is HTML, the output is not.
+        assert "<p>" not in jobs[0].description
+
+    def test_a_failed_description_leaves_the_teaser(self):
+        """One bad description must not lose the job."""
+
+        class Failing(FakeSession):
+            def post(self, *args, **kwargs):
+                raise RuntimeError("boom")
+
+        scraper = JobStreet()
+        scraper.session = Failing([load("search_page.json")])
+        scraper.fetch_description = True
+        jobs = scraper.scrape(an_input(results_wanted=1)).jobs
+
+        assert len(jobs) == 1
+        assert jobs[0].description  # the teaser survived

@@ -3,9 +3,13 @@ from __future__ import annotations
 import math
 import random
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
 from jobspy.jobstreet.constant import (
+    DESCRIPTION_WORKERS,
+    GRAPHQL_URL,
+    JOB_DETAILS_QUERY,
     JOBS_PER_PAGE,
     SEARCH_URL,
     SITE_KEY,
@@ -16,13 +20,19 @@ from jobspy.jobstreet.constant import (
 from jobspy.jobstreet.util import parse_job
 from jobspy.model import (
     Country,
+    DescriptionFormat,
     JobPost,
     JobResponse,
     Scraper,
     ScraperInput,
     Site,
 )
-from jobspy.util import create_logger, create_session
+from jobspy.util import (
+    create_logger,
+    create_session,
+    markdown_converter,
+    plain_converter,
+)
 
 log = create_logger("JobStreet")
 
@@ -53,6 +63,7 @@ class JobStreet(Scraper):
         self.scraper_input: ScraperInput | None = None
         self.jobs_per_page = JOBS_PER_PAGE
         self.seen_ids: set[str] = set()
+        self.fetch_description = False
 
     def _build_params(self, page: int) -> dict:
         """Builds one search query.
@@ -93,6 +104,55 @@ class JobStreet(Scraper):
             days=math.ceil(self.scraper_input.hours_old / 24)
         )
         return job.date_posted >= cutoff
+
+    def _fetch_description(self, job_id: str) -> str | None:
+        """Fetches one job's body from the board's GraphQL endpoint.
+
+        Returns None on any failure. The caller keeps the search teaser in
+        that case, so a flaky description never costs us the job.
+        """
+        try:
+            response = self.session.post(
+                GRAPHQL_URL,
+                json={
+                    "operationName": "jobDetails",
+                    "variables": {"jobId": job_id},
+                    "query": JOB_DETAILS_QUERY,
+                },
+                timeout=self.scraper_input.request_timeout,
+            )
+            payload = response.json() or {}
+        except Exception as exc:  # noqa: BLE001 - one description is not the batch
+            log.warning(f"description fetch failed for {job_id}: {exc}")
+            return None
+
+        job = ((payload.get("data") or {}).get("jobDetails") or {}).get("job") or {}
+        content = job.get("content")
+        if not content:
+            return None
+
+        # Matches the branch every other scraper uses: DescriptionFormat.HTML
+        # falls through untouched, because the board already sends HTML.
+        if self.scraper_input.description_format == DescriptionFormat.MARKDOWN:
+            return markdown_converter(content)
+        elif self.scraper_input.description_format == DescriptionFormat.PLAIN:
+            return plain_converter(content)
+        return content
+
+    def _add_descriptions(self, jobs: list[JobPost]) -> None:
+        """Fills descriptions in place, bounded to a small pool.
+
+        Search costs one request per hundred jobs; this costs one per job,
+        so it is the only part of the scrape worth bounding.
+        """
+
+        def fill(job: JobPost) -> None:
+            body = self._fetch_description(job.id.removeprefix("js-"))
+            if body:
+                job.description = body
+
+        with ThreadPoolExecutor(max_workers=DESCRIPTION_WORKERS) as executor:
+            list(executor.map(fill, jobs))
 
     def scrape(self, scraper_input: ScraperInput) -> JobResponse:
         self.scraper_input = scraper_input
@@ -156,4 +216,7 @@ class JobStreet(Scraper):
             jobs = [job for job in jobs if job.is_remote]
 
         start = scraper_input.offset
-        return JobResponse(jobs=jobs[start : start + scraper_input.results_wanted])
+        selected = jobs[start : start + scraper_input.results_wanted]
+        if self.fetch_description:
+            self._add_descriptions(selected)
+        return JobResponse(jobs=selected)
