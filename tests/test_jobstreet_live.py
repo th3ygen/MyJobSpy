@@ -3,6 +3,9 @@
 Deselected by default (pyproject sets addopts = "-m 'not live'"). Run with:
 
     poetry run pytest tests/test_jobstreet_live.py -m live -v
+
+A fixture test passing means the parser handles a shape captured in the
+past. This is what tells you the board still serves that shape today.
 """
 
 from __future__ import annotations
