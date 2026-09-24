@@ -30,10 +30,11 @@ log = create_logger("ScrapeJobs")
 
 # Boards worth querying for a Malaysian search. The rest are inherited from
 # upstream and stay importable, but are not queried unless asked for by name.
+# Google is one of the rest: Google Search now serves non-JavaScript clients a
+# challenge page with no results, so it returned zero rows in every baseline.
 DEFAULT_SITES: list[Site] = [
     Site.INDEED,
     Site.LINKEDIN,
-    Site.GOOGLE,
     Site.JOBSTREET,
     Site.HIREDLY,
 ]
