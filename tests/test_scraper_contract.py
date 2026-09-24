@@ -17,7 +17,7 @@ import pytest
 
 import jobspy.exception as exception_module
 from jobspy import SCRAPER_MAPPING
-from jobspy.model import JobResponse, Scraper, ScraperInput, Site
+from jobspy.model import SITE_DISPLAY_NAMES, JobResponse, Scraper, ScraperInput, Site
 
 REGISTERED = sorted(SCRAPER_MAPPING.items(), key=lambda item: item[0].value)
 
@@ -136,3 +136,38 @@ def test_scraper_input_and_job_response_are_the_shared_contract() -> None:
     assert issubclass(JobResponse, object) and hasattr(JobResponse, "model_fields")
     assert "jobs" in JobResponse.model_fields
     assert "results_wanted" in ScraperInput.model_fields
+
+
+# --- Log display names -------------------------------------------------------
+#
+# `scrape_jobs` used to derive a board's log name with
+# `site.value.capitalize()`, then hand-patch the boards that broke:
+# "Zip_recruiter" -> "ZipRecruiter", "Linkedin" -> "LinkedIn". Boards added
+# after those patches were written inherited the bug silently — JobStreet
+# logged its own lines under "JobStreet" and the orchestrator's under
+# "Jobstreet", and BDJobs under "BDJobs" and "Bdjobs". The map below makes a
+# missing entry a test failure rather than a cosmetic split nobody notices.
+
+
+def test_every_site_has_a_display_name() -> None:
+    """A new board must declare its log name, not inherit a guess."""
+    missing = sorted(site.value for site in Site if site not in SITE_DISPLAY_NAMES)
+    assert missing == [], f"no SITE_DISPLAY_NAMES entry for: {', '.join(missing)}"
+
+
+@pytest.mark.parametrize(
+    "site,expected",
+    [
+        pytest.param(Site.JOBSTREET, "JobStreet", id="jobstreet"),
+        pytest.param(Site.BDJOBS, "BDJobs", id="bdjobs"),
+        pytest.param(Site.ZIP_RECRUITER, "ZipRecruiter", id="zip_recruiter"),
+        pytest.param(Site.LINKEDIN, "LinkedIn", id="linkedin"),
+    ],
+)
+def test_display_name_matches_the_boards_own_logger(site: Site, expected: str) -> None:
+    """The four names `.capitalize()` cannot produce.
+
+    Each is the string that board's own module passes to `create_logger`, so
+    one board logs under exactly one name.
+    """
+    assert site.display_name == expected

@@ -295,8 +295,9 @@ class TestDescriptions:
 
     def test_fetches_and_converts_descriptions_when_on(self):
         scraper = make_scraper([load("search_page.json")])
-        scraper.fetch_description = True
-        jobs = scraper.scrape(an_input(results_wanted=2)).jobs
+        jobs = scraper.scrape(
+            an_input(results_wanted=2, jobstreet_fetch_description=True)
+        ).jobs
 
         graphql = [c for c in scraper.session.calls if c["url"].endswith("/graphql")]
         assert len(graphql) == 2
@@ -312,14 +313,19 @@ class TestDescriptions:
         """One bad description must not lose the job."""
 
         class Failing(FakeSession):
-            def post(self, *args, **kwargs):
+            def post(self, url, json=None, timeout=None, **kwargs):
+                self.calls.append({"url": url, "json": json})
                 raise RuntimeError("boom")
 
         scraper = JobStreet()
         scraper.session = Failing([load("search_page.json")])
-        scraper.fetch_description = True
-        jobs = scraper.scrape(an_input(results_wanted=1)).jobs
+        jobs = scraper.scrape(
+            an_input(results_wanted=1, jobstreet_fetch_description=True)
+        ).jobs
 
+        # Without this the assertions below hold just as well when no
+        # description was ever requested, which is not what is being tested.
+        assert [c for c in scraper.session.calls if c["url"].endswith("/graphql")]
         assert len(jobs) == 1
         assert jobs[0].description  # the teaser survived
 
@@ -345,8 +351,9 @@ class TestDescriptions:
         monkeypatch.setattr("jobspy.jobstreet.DESCRIPTION_WORKERS", 1)
         scraper = JobStreet()
         scraper.session = Forbidden([load("search_page.json")])
-        scraper.fetch_description = True
-        jobs = scraper.scrape(an_input(results_wanted=5)).jobs
+        jobs = scraper.scrape(
+            an_input(results_wanted=5, jobstreet_fetch_description=True)
+        ).jobs
 
         graphql_calls = [
             c for c in scraper.session.calls if c["url"].endswith("/graphql")
@@ -371,8 +378,12 @@ class TestDescriptions:
 
         scraper = JobStreet()
         scraper.session = NonDictPayload([load("search_page.json")])
-        scraper.fetch_description = True
-        jobs = scraper.scrape(an_input(results_wanted=1)).jobs
+        jobs = scraper.scrape(
+            an_input(results_wanted=1, jobstreet_fetch_description=True)
+        ).jobs
 
+        # Proves the malformed payload was actually reached and handled,
+        # rather than descriptions never having been fetched.
+        assert [c for c in scraper.session.calls if c["url"].endswith("/graphql")]
         assert len(jobs) == 1
         assert jobs[0].description  # the teaser survived

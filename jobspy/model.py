@@ -317,6 +317,34 @@ class Site(Enum):
     BDJOBS = "bdjobs"
     JOBSTREET = "jobstreet"
 
+    @property
+    def display_name(self) -> str:
+        """The board's name as it appears in logs.
+
+        Every entry is the exact string that board's own module hands to
+        `create_logger`, so one board logs under one name. Looked up rather
+        than derived: `site.value.capitalize()` gets "Zip_recruiter",
+        "Linkedin", "Jobstreet" and "Bdjobs" wrong, and a derivation that is
+        wrong for half the boards is worse than a table, because each new
+        board inherits the error silently.
+        """
+        return SITE_DISPLAY_NAMES[self]
+
+
+# Keyed by every Site member — `test_every_site_has_a_display_name` fails if a
+# new board is added without an entry, which is the point.
+SITE_DISPLAY_NAMES: dict[Site, str] = {
+    Site.LINKEDIN: "LinkedIn",
+    Site.INDEED: "Indeed",
+    Site.ZIP_RECRUITER: "ZipRecruiter",
+    Site.GLASSDOOR: "Glassdoor",
+    Site.GOOGLE: "Google",
+    Site.BAYT: "Bayt",
+    Site.NAUKRI: "Naukri",
+    Site.BDJOBS: "BDJobs",
+    Site.JOBSTREET: "JobStreet",
+}
+
 
 class SalarySource(Enum):
     DIRECT_DATA = "direct_data"
@@ -337,6 +365,7 @@ class ScraperInput(BaseModel):
     offset: int = 0
     linkedin_fetch_description: bool = False
     linkedin_company_ids: list[int] | None = None
+    jobstreet_fetch_description: bool = False
     description_format: DescriptionFormat | None = DescriptionFormat.MARKDOWN
 
     request_timeout: int = 60

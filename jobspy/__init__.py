@@ -134,6 +134,7 @@ def scrape_jobs(
         easy_apply=easy_apply,
         description_format=description_format,
         linkedin_fetch_description=linkedin_fetch_description,
+        jobstreet_fetch_description=jobstreet_fetch_description,
         results_wanted=results_wanted,
         linkedin_company_ids=linkedin_company_ids,
         offset=offset,
@@ -143,15 +144,8 @@ def scrape_jobs(
     def scrape_site(site: Site, site_input: ScraperInput) -> Tuple[str, JobResponse]:
         scraper_class = scrapers[site]
         scraper = scraper_class(proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
-        # Board-specific and not part of ScraperInput, which every board
-        # shares. Set by attribute so the shared contract stays unchanged.
-        if isinstance(scraper, JobStreet):
-            scraper.fetch_description = jobstreet_fetch_description
         scraped_data: JobResponse = scraper.scrape(site_input)
-        cap_name = site.value.capitalize()
-        site_display = "ZipRecruiter" if cap_name == "Zip_recruiter" else cap_name
-        site_display = "LinkedIn" if cap_name == "Linkedin" else site_display
-        create_logger(site_display).info("finished scraping")
+        create_logger(site.display_name).info("finished scraping")
         return site.value, scraped_data
 
     site_to_jobs_dict: dict[str, JobResponse] = {}
@@ -194,7 +188,7 @@ def scrape_jobs(
             try:
                 site_value, scraped_data = future.result()
             except Exception as exc:  # noqa: BLE001 - one board must not kill the run
-                create_logger(site.value.capitalize()).error(
+                create_logger(site.display_name).error(
                     f"scrape failed, continuing without it: {exc}"
                 )
                 site_to_jobs_dict.setdefault(site.value, JobResponse(jobs=[]))

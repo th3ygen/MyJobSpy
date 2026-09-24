@@ -87,12 +87,13 @@ Two properties to preserve when touching this:
 
 ## Adding a new job board
 
-1. Add the member to `Site` in `jobspy/model.py` (string value = what users pass in `site_name`; `map_str_to_site` does `Site[name.upper()]`).
+1. Add the member to `Site` in `jobspy/model.py` (string value = what users pass in `site_name`; `map_str_to_site` does `Site[name.upper()]`), **and an entry in `SITE_DISPLAY_NAMES` beside it** — the log name, matching whatever the board's own module passes to `create_logger`.
 2. Create `jobspy/<site>/` with the `__init__.py` / `constant.py` / `util.py` split above; subclass `Scraper`, pass `proxies`, `ca_cert` **and** `user_agent` to `super().__init__`.
 3. Register it in the module-level `SCRAPER_MAPPING` in `jobspy/__init__.py` and add a `<Board>Exception` in `jobspy/exception.py`.
 4. Stamp a site-prefixed `JobPost.id` from the board's own record key — dedup keys on it.
 5. Map the board's fields onto the existing `JobPost` fields wherever they fit; only add a new optional field (plus `desired_order` entry) when nothing fits.
 6. Respect `description_format` (`markdown_converter` / `plain_converter`), populate `Location(city=..., state=..., country=Country.MALAYSIA)`, and dedup via `seen_urls`.
+7. A board-specific option (a `<board>_fetch_description` switch, an id list) goes on `ScraperInput` as a `<board>_`-prefixed field, is passed through in `scrape_jobs`, and is read off `scraper_input` inside `scrape()`. Never set it onto the instance from `scrape_jobs` — the orchestrator does not know board classes.
 
 Then run `poetry run pytest tests/test_scraper_contract.py` — steps 1–3 are exactly what it checks, so it fails until they are done.
 

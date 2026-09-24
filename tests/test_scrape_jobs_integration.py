@@ -449,15 +449,17 @@ def test_unsupported_board_still_works_when_named_explicitly(monkeypatch, make_j
 
 
 def test_jobstreet_fetch_description_reaches_the_scraper(monkeypatch):
-    """The kwarg is board-specific, so it is set after construction."""
+    """Board-specific options travel on ScraperInput, like LinkedIn's.
+
+    They used to be assigned onto the instance behind an
+    `isinstance(scraper, JobStreet)` branch in `scrape_site`, which meant the
+    orchestrator had to name each board class to route its own options.
+    """
     seen = {}
 
     class FakeJobStreet(jobspy.JobStreet):
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-
         def scrape(self, scraper_input):
-            seen["fetch_description"] = self.fetch_description
+            seen["fetch_description"] = scraper_input.jobstreet_fetch_description
             return JobResponse(jobs=[])
 
     monkeypatch.setattr(jobspy, "JobStreet", FakeJobStreet, raising=False)
@@ -475,10 +477,61 @@ def test_jobstreet_fetch_description_defaults_to_false(monkeypatch):
 
     class FakeJobStreet(jobspy.JobStreet):
         def scrape(self, scraper_input):
-            seen["fetch_description"] = self.fetch_description
+            seen["fetch_description"] = scraper_input.jobstreet_fetch_description
             return JobResponse(jobs=[])
 
     monkeypatch.setattr(jobspy, "JobStreet", FakeJobStreet, raising=False)
 
     jobspy.scrape_jobs(site_name=["jobstreet"], search_term="engineer")
     assert seen["fetch_description"] is False
+
+
+def test_scrape_jobs_logs_a_board_under_its_own_display_name(monkeypatch):
+    """`scrape_jobs` must not invent a second name for a board.
+
+    JobStreet's own modules log to "JobSpy:JobStreet"; the orchestrator's
+    `.capitalize()` produced "JobSpy:Jobstreet" for the same run, so grepping
+    a log for one board missed half its lines.
+    """
+    names = []
+
+    class QuietJobStreet(jobspy.JobStreet):
+        def scrape(self, scraper_input):
+            return JobResponse(jobs=[])
+
+    real_create_logger = jobspy.create_logger
+
+    def spy(name):
+        names.append(name)
+        return real_create_logger(name)
+
+    monkeypatch.setattr(jobspy, "JobStreet", QuietJobStreet, raising=False)
+    monkeypatch.setattr(jobspy, "create_logger", spy)
+
+    jobspy.scrape_jobs(site_name=["jobstreet"], search_term="engineer")
+
+    assert "JobStreet" in names
+    assert "Jobstreet" not in names
+
+
+def test_scrape_jobs_logs_a_failing_board_under_its_own_display_name(monkeypatch):
+    """The error path had its own separate `.capitalize()` call."""
+    names = []
+
+    class BrokenJobStreet(jobspy.JobStreet):
+        def scrape(self, scraper_input):
+            raise RuntimeError("boom")
+
+    real_create_logger = jobspy.create_logger
+
+    def spy(name):
+        names.append(name)
+        return real_create_logger(name)
+
+    monkeypatch.setattr(jobspy, "JobStreet", BrokenJobStreet, raising=False)
+    monkeypatch.setattr(jobspy, "create_logger", spy)
+
+    jobspy.scrape_jobs(site_name=["jobstreet"], search_term="engineer")
+
+    assert "JobStreet" in names
+    assert "Jobstreet" not in names
