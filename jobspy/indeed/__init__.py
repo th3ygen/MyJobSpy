@@ -36,7 +36,18 @@ class Indeed(Scraper):
         """
         Initializes IndeedScraper with the Indeed API url
         """
-        super().__init__(Site.INDEED, proxies=proxies)
+        # user_agent is stored but deliberately not sent: the API below is
+        # the iPhone app's and expects the app's UA. A desktop browser UA got
+        # a 403 from it (measured 2026-09-24), and scrape_jobs gives every
+        # board the same user_agent, so honouring it here would let a UA
+        # meant for another board get Indeed blocked.
+        super().__init__(
+            Site.INDEED, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent
+        )
+        if user_agent:
+            log.info(
+                "Indeed keeps its app user-agent; user_agent is not sent to its API"
+            )
 
         self.session = create_session(
             proxies=self.proxies, ca_cert=ca_cert, is_tls=False

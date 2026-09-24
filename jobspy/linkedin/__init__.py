@@ -59,7 +59,9 @@ class LinkedIn(Scraper):
         """
         Initializes LinkedInScraper with the LinkedIn job search url
         """
-        super().__init__(Site.LINKEDIN, proxies=proxies, ca_cert=ca_cert)
+        super().__init__(
+            Site.LINKEDIN, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent
+        )
         self.session = create_session(
             proxies=self.proxies,
             ca_cert=ca_cert,
@@ -69,6 +71,8 @@ class LinkedIn(Scraper):
             clear_cookies=True,
         )
         self.session.headers.update(headers)
+        if user_agent:
+            self.session.headers["user-agent"] = user_agent
         self.scraper_input = None
         self.country = "worldwide"
         self.job_url_direct_regex = re.compile(r'(?<=\?url=)[^"]+')

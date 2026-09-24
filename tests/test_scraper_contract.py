@@ -33,8 +33,6 @@ BOARDS = [pytest.param(cls, id=site.value) for site, cls in REGISTERED]
 #
 # See the matching gotcha in CLAUDE.md.
 USER_AGENT_NOT_FORWARDED = {
-    "linkedin",
-    "indeed",
     "zip_recruiter",
     "google",
     "bayt",
