@@ -265,6 +265,26 @@ def _lookup(text: str | None) -> tuple[str | None, MalaysianState] | None:
     return _GAZETTEER.get(_key(text))
 
 
+def resolve_state(text: str | None) -> MalaysianState | None:
+    """Resolves one free-text location, as a caller types it, to a state.
+
+    For building a board's query filter, not for normalizing scraped output
+    (normalize_location does that). Tries the whole string, then each
+    comma-separated part left to right, so "Petaling Jaya, Selangor" and the
+    fork's own "Kuala Lumpur, Malaysia" convention both resolve. Returns None
+    for anything that is not a Malaysian place - including "Malaysia" itself,
+    which is a nationwide search, not a state.
+    """
+    if not text:
+        return None
+    candidates = [text] + [part.strip() for part in text.split(",")]
+    for candidate in candidates:
+        hit = _lookup(candidate)
+        if hit:
+            return hit[1]
+    return None
+
+
 def normalize_location(
     location: Location | None,
 ) -> tuple[Location | None, str | None]:

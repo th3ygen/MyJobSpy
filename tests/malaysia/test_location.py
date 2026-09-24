@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from jobspy.malaysia.location import MalaysianState, normalize_location
+from jobspy.malaysia.location import MalaysianState, normalize_location, resolve_state
 from jobspy.model import Country, Location
 
 
@@ -196,3 +196,32 @@ def test_slash_joined_dual_locality_still_does_not_resolve():
 
     assert normalized.state is None
     assert unmatched == "Klang/Port Klang"
+
+
+# --- resolve_state: query-side lookup ---------------------------------------
+#
+# Used by scrapers to turn a caller's `location` into a board's state filter.
+# Unlike normalize_location it works on one free-text string, the way a user
+# types it, so it has to cope with "City, State" and the fork's own
+# "City, Malaysia" convention.
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Selangor", MalaysianState.SELANGOR),
+        ("Penang", MalaysianState.PULAU_PINANG),
+        ("Petaling Jaya", MalaysianState.SELANGOR),
+        ("Kuala Lumpur, Malaysia", MalaysianState.KUALA_LUMPUR),
+        ("Petaling Jaya, Selangor", MalaysianState.SELANGOR),
+        ("Bayan Lepas, Penang, Malaysia", MalaysianState.PULAU_PINANG),
+    ],
+)
+def test_resolve_state(text, expected):
+    assert resolve_state(text) == expected
+
+
+@pytest.mark.parametrize("text", [None, "", "Malaysia", "Atlantis", "Singapore"])
+def test_resolve_state_unresolvable(text):
+    """Nationwide or unknown input is not a state - the caller must not filter."""
+    assert resolve_state(text) is None

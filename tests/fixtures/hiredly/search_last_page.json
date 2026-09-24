@@ -1,0 +1,145 @@
+{
+ "data": {
+  "jobListsSearchResults": {
+   "totalCount": 9,
+   "pageInfo": {
+    "hasNextPage": false,
+    "endCursor": "OQ"
+   },
+   "nodes": [
+    {
+     "id": "a0d05797-c275-4c82-8b36-aab973564e14",
+     "title": "Software Engineer",
+     "slug": "jobs-malaysia-xilnex-holdings-sdn-bhd-job-software-engineer",
+     "salary": "3000 - 4000",
+     "stateRegion": "Penang",
+     "location": "Unit 70-3-71, D’Piazza Mall, Jalan Mahsuri, Bayan Baru",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-11T15:53:26+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>&nbsp;</p><p><strong>Key Responsibilities: </strong></p>",
+     "requirements": "<p></p>",
+     "careerLevel": "Entry Level",
+     "minYearsExperience": 0,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Software Engineering"
+      }
+     ],
+     "company": {
+      "name": "Xilnex Holdings Sdn Bhd",
+      "logo": "//resources.wobbjobs.com/companies/c6f6f277-1e2d-4250-8e72-99f6bdf8e600/company_logo/original/fec735e6-1206-48f1-8938-798a89c100ba-Xilnex%20Product%20logo.png"
+     }
+    },
+    {
+     "id": "1478341e-2548-4b46-a96d-654c4889d727",
+     "title": "Application Engineer | Bukit Mertajam Penang",
+     "slug": "jobs-malaysia-cadvision-systems-sdn-bhd-job-application-engineer-bukit-mertajam-penang",
+     "salary": "4000 - 5500",
+     "stateRegion": "Penang",
+     "location": "Bukit Mertajam",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-22T09:49:38+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p><strong>Who we are?</strong><br>CADVision Systems, your trusted SOLIDWORKS and SolidCAM authorized partner in Malaysia and Singapore, dedicated to enhancing design capabilities and providing exceptional software support.</p><p><strong>OUR PURPOSE</strong><br>To empower local engineers and companies to meet engineering challenges through advanced technology and expertise.<br>Our mission is to equip and support local engineers and companies in overcoming engineering challenges through the utilization of advanced technology and expert knowledge. We strive to empower them to achieve excellence and success in their endeavors.</p>",
+     "requirements": "<p><strong>Who are we looking for this role:</strong></p>",
+     "careerLevel": "Entry Level",
+     "minYearsExperience": 0,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Interpersonal Communications"
+      },
+      {
+       "name": "Teamwork"
+      },
+      {
+       "name": "Willingness To Learn"
+      },
+      {
+       "name": "Problem Solving"
+      }
+     ],
+     "company": {
+      "name": "CADVision Systems Sdn Bhd",
+      "logo": "//resources.wobbjobs.com/companies/c27e6cb1-2e63-41b1-a420-ab8321b32b68/company_logo/original/9f1e1803-57f1-4fbc-9bc7-98817892500b-CVS_Logo_Authorized%20Reseller.png"
+     }
+    },
+    {
+     "id": "ed363b0d-45cc-4342-86dc-bcdd86f9c72d",
+     "title": "Server Platform Senior Validation Engineer",
+     "slug": "jobs-malaysia-issquared-malaysia-sdn-bhd-job-server-platform-senior-validation-engineer",
+     "salary": "6000 - 10000",
+     "stateRegion": "Penang",
+     "location": "Bayan Lepas",
+     "jobType": "Full-Time",
+     "activeAt": "2026-06-09T11:53:59+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>We are seeking an experienced Server Platforms Validation Sr.Engineer with deep expertise in Linux, Hyper-V, Proxmox, servers, storage systems, and datacenter operations. This role requires advanced technical knowledge to configure systems based on customer requirements and to troubleshoot and resolve complex Proxmox and Hyper-V issues.</p><p>The position involves direct coordination and collaboration with technical personnel across multiple specializations. The environment is fast-paced with high expectations for quality, communication, and turnaround time.</p>",
+     "requirements": "<p>Demonstrate thorough understanding of historical and current Linux Server and Windows Server operating systems.</p>",
+     "careerLevel": "Senior Executive",
+     "minYearsExperience": 4,
+     "maxYearsExperience": 7,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Troubleshooting (Problem Solving)"
+      },
+      {
+       "name": "Software Engineering"
+      },
+      {
+       "name": "Validation Testing"
+      },
+      {
+       "name": "Development Testing"
+      }
+     ],
+     "company": {
+      "name": "Issquared Malaysia Sdn. Bhd.",
+      "logo": "//resources.wobbjobs.com/jobs-malaysia/companies/4bd4a187-91ac-48bf-bc96-81a918d3e705/company_logo/original/727612d6-a756-4280-ac6f-4fc86ffad6b6-Issquaredinc%20Logo.png"
+     }
+    }
+   ]
+  }
+ }
+}

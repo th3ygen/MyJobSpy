@@ -35,8 +35,9 @@ class BaytException(Exception):
     def __init__(self, message=None):
         super().__init__(message or "An error occurred with Bayt")
 
+
 class NaukriException(Exception):
-    def __init__(self,message=None):
+    def __init__(self, message=None):
         super().__init__(message or "An error occurred with Naukri")
 
 
@@ -48,3 +49,8 @@ class BDJobsException(Exception):
 class JobStreetException(Exception):
     def __init__(self, message=None):
         super().__init__(message or "An error occurred with JobStreet")
+
+
+class HiredlyException(Exception):
+    def __init__(self, message=None):
+        super().__init__(message or "An error occurred with Hiredly")
