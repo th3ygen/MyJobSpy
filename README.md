@@ -76,16 +76,15 @@ The default `site_name` (used whenever the parameter is omitted) is `indeed`, `l
 
 ## Roadmap — Malaysian job boards
 
-The rest are not implemented yet. They are the intended direction of this fork:
-
 - [x] **JobStreet Malaysia** (`my.jobstreet.com`) — the dominant MY board, highest priority
 - [x] **Hiredly** (formerly WOBB) — startup / young-professional roles
-- [ ] **Maukerja** — Bahasa Malaysia listings, blue-collar & retail heavy
-- [ ] **Ricebowl** — SME and fresh-grad roles
-- [ ] **Glints Malaysia** — tech and startup roles
 - [ ] Bahasa Malaysia search-term handling (e.g. *jurutera*, *kerani*, *pemandu*)
 
-Contributions toward any of these are welcome.
+**Not pursued** (decided 2026-09-24):
+
+- **Maukerja** — its terms of use prohibit scraping, crawling or systematically extracting data without prior written consent, and its robots.txt disallows every search and API path. Worth adding only with that consent, e.g. through a partner feed. This leaves blue-collar and Bahasa Malaysia listings, Maukerja's niche, largely uncovered.
+- **Ricebowl** — its robots.txt is identical to Maukerja's, line for line, including the shared API paths, which suggests one operator. Its own terms were not checked; read them before reconsidering.
+- **Glints** — its market is mainly Indonesia and Singapore; its Malaysian coverage is too small to justify a board.
 
 ## Malaysia-specific caveats
 

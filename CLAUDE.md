@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-MyJobSpy is a fork of [cullenwatson/JobSpy](https://github.com/cullenwatson/JobSpy) narrowed to the **Malaysian** job market. It scrapes several job boards concurrently and returns one pandas DataFrame. Upstream scrapers for non-MY markets (ZipRecruiter, Bayt, Naukri, BDJobs, Glassdoor) are kept in the tree but are not targets for this fork — Indeed (`country_indeed="malaysia"`), LinkedIn, JobStreet MY and Hiredly are the four `DEFAULT_SITES`. JobStreet (`my.jobstreet.com`) is the dominant MY board and a primary target for this fork, alongside Indeed MY. The roadmap in `README.md` (Maukerja, Ricebowl, Glints) drives most new work, so *adding a scraper* is the most common task here.
+MyJobSpy is a fork of [cullenwatson/JobSpy](https://github.com/cullenwatson/JobSpy) narrowed to the **Malaysian** job market. It scrapes several job boards concurrently and returns one pandas DataFrame. Upstream scrapers for non-MY markets (ZipRecruiter, Bayt, Naukri, BDJobs, Glassdoor) are kept in the tree but are not targets for this fork — Indeed (`country_indeed="malaysia"`), LinkedIn, JobStreet MY and Hiredly are the four `DEFAULT_SITES`. JobStreet (`my.jobstreet.com`) is the dominant MY board and a primary target for this fork, alongside Indeed MY. The board roadmap in `README.md` is done for now: Maukerja is ruled out by terms that prohibit scraping without written consent, Ricebowl by sharing Maukerja's robots.txt (its own terms are unchecked), and Glints by market fit — don't start Maukerja without that consent, or Ricebowl without reading its terms. A new board, if one comes, follows the recipe below.
 
 ## Commands
 
