@@ -302,15 +302,37 @@ class JobStreet(Scraper):
                 log.error(f"JobStreet returned {response.status_code}; stopping")
                 break
 
-            records = (response.json() or {}).get("data") or []
+            try:
+                payload = response.json()
+            except ValueError:
+                # A Cloudflare challenge page can arrive with a 200.
+                log.error("JobStreet returned a non-JSON body; stopping")
+                break
+            if not isinstance(payload, dict):
+                log.error("JobStreet returned a non-object payload; stopping")
+                break
+            records = payload.get("data") or []
+            if not isinstance(records, list):
+                log.error("JobStreet returned no list of results; stopping")
+                break
             if not records:
                 break
 
             for record in records:
+                if not isinstance(record, dict):
+                    continue
                 if record.get("id") in self.seen_ids:
                     continue
                 self.seen_ids.add(record.get("id"))
-                job = parse_job(record)
+                try:
+                    job = parse_job(record)
+                except (
+                    Exception
+                ) as exc:  # noqa: BLE001 - one record must not lose the page
+                    log.warning(
+                        f"skipping unparseable record {record.get('id')!r}: {exc}"
+                    )
+                    continue
                 if job is None or not self._within_age(job):
                     continue
                 # Filtered inline, not after paging ends: the while-condition

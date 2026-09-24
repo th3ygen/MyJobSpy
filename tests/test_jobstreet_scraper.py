@@ -40,7 +40,10 @@ class FakeSession:
         self.calls.append({"url": url, "params": params})
         if not self._pages:
             return FakeResponse(load("search_empty.json"))
-        return FakeResponse(self._pages.pop(0))
+        page = self._pages.pop(0)
+        if isinstance(page, FakeResponse):
+            return page
+        return FakeResponse(page)
 
     def post(self, url, json=None, timeout=None, **kwargs):
         self.calls.append({"url": url, "json": json})
@@ -387,3 +390,45 @@ class TestDescriptions:
         assert [c for c in scraper.session.calls if c["url"].endswith("/graphql")]
         assert len(jobs) == 1
         assert jobs[0].description  # the teaser survived
+
+
+class TestMalformedResponses:
+    """One bad page or record must cost that page or that row - never the
+    pages already collected, which is what an exception escaping scrape()
+    does (scrape_jobs then reports the whole board as failed)."""
+
+    def test_a_non_json_body_keeps_earlier_pages(self):
+        """A Cloudflare challenge page can arrive with status 200."""
+
+        class HtmlResponse(FakeResponse):
+            def json(self):
+                raise ValueError("Expecting value: line 1 column 1")
+
+        scraper = make_scraper([load("search_page.json"), HtmlResponse(None)])
+        scraper.jobs_per_page = 8  # page 1 is full, so page 2 is requested
+        jobs = scraper.scrape(an_input(results_wanted=50)).jobs
+
+        assert len(scraper.session.calls) == 2
+        assert len(jobs) == 8
+
+    def test_a_non_object_payload_does_not_raise(self):
+        scraper = make_scraper([[1, 2, 3]])
+        assert scraper.scrape(an_input()).jobs == []
+
+    def test_a_non_list_data_field_does_not_raise(self):
+        scraper = make_scraper([{"data": "unexpected"}])
+        assert scraper.scrape(an_input()).jobs == []
+
+    def test_a_null_record_is_skipped(self):
+        page = load("search_page.json")
+        page["data"].insert(0, None)
+        jobs = make_scraper([page]).scrape(an_input(results_wanted=50)).jobs
+
+        assert len(jobs) == 8
+
+    def test_a_record_that_breaks_the_parser_costs_one_row(self):
+        page = load("search_page.json")
+        page["data"][0]["title"] = {"unexpected": "object"}
+        jobs = make_scraper([page]).scrape(an_input(results_wanted=50)).jobs
+
+        assert len(jobs) == 7
