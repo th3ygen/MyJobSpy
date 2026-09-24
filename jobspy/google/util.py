@@ -39,3 +39,18 @@ def find_job_info_initial_page(html_text: str):
             log.error(f"Failed to parse match: {str(e)}")
             results.append({"raw_match": match.group(0), "error": str(e)})
     return results
+
+
+def is_javascript_challenge(html_text: str) -> bool:
+    """True when Google answered with its JavaScript-required page.
+
+    Since 2025 Google Search serves non-JavaScript clients a script-only page
+    whose <noscript> block redirects to /httpservice/retry/enablejs, with no
+    results in it (captured in tests/fixtures/google/js_challenge.html). The
+    results markup is checked too, so a real results page that happens to
+    link the retry path is not misread as blocked.
+    """
+    return (
+        "/httpservice/retry/enablejs" in html_text
+        and 'jsname="Yust4d"' not in html_text
+    )

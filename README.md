@@ -6,7 +6,7 @@
 
 ## Features
 
-- Scrapes **Indeed Malaysia**, **LinkedIn**, **Google Jobs**, **JobStreet Malaysia** and **Hiredly** concurrently by default — the five other upstream boards (Glassdoor, ZipRecruiter, Bayt, Naukri, BDJobs) are quarantined out of the default set but still work if named explicitly in `site_name`
+- Scrapes **Indeed Malaysia**, **LinkedIn**, **JobStreet Malaysia** and **Hiredly** concurrently by default — the other upstream boards (Google, Glassdoor, ZipRecruiter, Bayt, Naukri, BDJobs) are quarantined out of the default set but still work if named explicitly in `site_name`
 - Malaysian locations out of the box — Kuala Lumpur, Selangor, Penang, Johor, Cyberjaya, and more
 - Aggregates everything into one pandas DataFrame → CSV / Excel
 - Proxy support to work around rate limiting
@@ -28,9 +28,8 @@ import csv
 from jobspy import scrape_jobs
 
 jobs = scrape_jobs(
-    site_name=["indeed", "linkedin", "google"],
+    site_name=["indeed", "linkedin", "jobstreet", "hiredly"],
     search_term="software engineer",
-    google_search_term="software engineer jobs in Kuala Lumpur Malaysia since yesterday",
     location="Kuala Lumpur, Malaysia",
     country_indeed="malaysia",          # already the default; shown for clarity — routes to malaysia.indeed.com
     results_wanted=20,
@@ -64,7 +63,7 @@ Use `location="Malaysia"` for a nationwide search, or add `is_remote=True` for r
 |---|---|---|
 | **Indeed** | ✅ Default | Uses `malaysia.indeed.com`. Requires `country_indeed="malaysia"`. Rate limited in practice — sustained or large-`results_wanted` runs start returning empty pages, so pace your scrapes and use proxies for anything heavy. Returns real results, but no structured salary data — see caveats below. |
 | **LinkedIn** | ✅ Default | Searches globally via `location`. Heavily rate limited — proxies recommended. Returns real results, but no salary data and no description text unless `linkedin_fetch_description=True`. |
-| **Google** | ✅ Default | Filtered *only* by `google_search_term`. Needs very specific phrasing (see FAQ) — returned zero rows across every search tried during this project's measurements. |
+| **Google** | ⛔ Not default — broken | Google Search now answers non-JavaScript clients with a challenge page containing no results (measured 2026-09-24), so this scraper returns nothing and logs an error saying so. It returned zero rows in every baseline this fork has run. Still importable by name; would need a real browser to work again. |
 | **JobStreet** | ✅ Default | Uses `my.jobstreet.com`'s public JSON search API, plus a GraphQL endpoint for full descriptions when `jobstreet_fetch_description=True`. The only board with structured MY salary — see caveats below. Both endpoints sit behind Cloudflare and can return 403 (its HTML job pages are also robots.txt-disallowed, but the scraper never requests those); the scraper treats a 403 from either as a block and stops rather than retrying, so a JobStreet run can end early with partial results — or with plain search teasers instead of full descriptions — if the board decides to block it. |
 | **Hiredly** | ✅ Default | Uses the GraphQL API `my.hiredly.com`'s own frontend calls; full descriptions arrive with the search, so there is no per-job request. Salary is structured (`salary_source="direct_data"`). Filters by **state only** — a city such as `"Petaling Jaya"` widens to Selangor. About half its listings are aggregated from employer career sites; those carry no salary, and `job_url_direct` links to the employer's own posting. Postings located outside Malaysia (the board also lists Singapore jobs) are dropped. Cloudflare-fronted; a 403 stops the run rather than retrying. |
 | Glassdoor | ⚠️ Quarantined | No Malaysian Glassdoor domain; falls back to `www.glassdoor.com` and returns US-centric results. Not in the default `site_name`; pass `site_name="glassdoor"` to use it anyway. |
@@ -73,7 +72,7 @@ Use `location="Malaysia"` for a nationwide search, or add `is_remote=True` for r
 | Naukri | ❌ Quarantined | India. Not in the default `site_name`; pass it explicitly to use it anyway. |
 | BDJobs | ❌ Quarantined | Bangladesh. Not in the default `site_name`; pass it explicitly to use it anyway. |
 
-The default `site_name` (used whenever the parameter is omitted) is `indeed`, `linkedin`, `google`, `jobstreet`, `hiredly` — the five boards worth querying for a Malaysian search. The other five are inherited from upstream and left in the codebase, fully importable and usable, but are quarantined out of the default set: pass them by name (e.g. `site_name="bayt"` or `site_name=["indeed", "bayt"]`) to use them anyway.
+The default `site_name` (used whenever the parameter is omitted) is `indeed`, `linkedin`, `jobstreet`, `hiredly` — the four boards worth querying for a Malaysian search. The other six are inherited from upstream and left in the codebase, fully importable and usable, but are quarantined out of the default set: pass them by name (e.g. `site_name="bayt"` or `site_name=["indeed", "bayt"]`) to use them anyway.
 
 ## Roadmap — Malaysian job boards
 
@@ -103,7 +102,7 @@ Contributions toward any of these are welcome.
 ```plaintext
 Optional
 ├── site_name (list|str):
-|    defaults to indeed, linkedin, google, jobstreet, hiredly when omitted (the
+|    defaults to indeed, linkedin, jobstreet, hiredly when omitted (the
 |    MY-relevant boards)
 |    also available, but quarantined out of the default - pass explicitly:
 |    glassdoor, zip_recruiter, bayt, naukri, bdjobs
@@ -205,7 +204,6 @@ indeed    Software Engineer           Setel Ventures     Kuala Lumpur, Kuala Lum
 indeed    Backend Developer           Grab               Petaling Jaya, Selangor, Malaysia     fulltime  monthly   7000        11000       MYR
 linkedin  Senior Software Engineer    AirAsia            Kuala Lumpur, Kuala Lumpur, Malaysia  fulltime  None      None        None        None
 linkedin  Full-Stack Developer        Carsome            Cyberjaya, Selangor, Malaysia         fulltime  None      None        None        None
-google    Software Engineer (Fresh)   Maxis              Kuala Lumpur, Kuala Lumpur, Malaysia  fulltime  None      None        None        None
 ```
 
 `location` is the *normalized* location — city, canonical state, country — whatever shape the board originally reported (Indeed's raw `Kuala Lumpur, MY` becomes the row above). Kuala Lumpur appears twice in a KL row because it is both the city and the federal territory that serves as its state.
@@ -230,7 +228,7 @@ Use `-` to exclude words and `""` for exact matches.
 ---
 
 **Q: No results from `google`?**
-Google Jobs requires very specific phrasing. Search Google Jobs in your browser, apply filters, then copy the exact text from the search box into `google_search_term`.
+Expected. Google Search now requires JavaScript and serves a challenge page to this scraper instead of results; the log line `Google requires JavaScript for search results` confirms it. Changing `google_search_term` will not help. That is why Google is no longer a default board.
 
 ---
 

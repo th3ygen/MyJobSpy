@@ -17,7 +17,12 @@ from jobspy.model import (
     JobType,
 )
 from jobspy.util import extract_emails_from_text, extract_job_type, create_session
-from jobspy.google.util import log, find_job_info_initial_page, find_job_info
+from jobspy.google.util import (
+    log,
+    find_job_info_initial_page,
+    find_job_info,
+    is_javascript_challenge,
+)
 
 
 class Google(Scraper):
@@ -38,6 +43,7 @@ class Google(Scraper):
         self.scraper_input = None
         self.jobs_per_page = 10
         self.seen_urls = set()
+        self.blocked = False
         self.url = "https://www.google.com/search"
         self.jobs_url = "https://www.google.com/async/callback:550"
 
@@ -54,6 +60,13 @@ class Google(Scraper):
             proxies=self.proxies, ca_cert=self.ca_cert, is_tls=False, has_retry=True
         )
         forward_cursor, job_list = self._get_initial_cursor_and_jobs()
+        if self.blocked:
+            log.error(
+                "Google requires JavaScript for search results and served its "
+                "challenge page instead; no jobs returned. This scraper cannot "
+                "run JavaScript, so Google Jobs does not work until that changes."
+            )
+            return JobResponse(jobs=[])
         if forward_cursor is None:
             log.warning(
                 "initial cursor not found, try changing your query or there was at most 10 results"
@@ -125,6 +138,9 @@ class Google(Scraper):
 
         params = {"q": query, "udm": "8"}
         response = self.session.get(self.url, headers=headers_initial, params=params)
+        if is_javascript_challenge(response.text):
+            self.blocked = True
+            return None, []
 
         pattern_fc = r'<div jsname="Yust4d"[^>]+data-async-fc="([^"]+)"'
         match_fc = re.search(pattern_fc, response.text)

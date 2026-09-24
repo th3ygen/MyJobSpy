@@ -426,7 +426,6 @@ def test_default_sites_are_malaysia_relevant():
     assert {site.value for site in DEFAULT_SITES} == {
         "indeed",
         "linkedin",
-        "google",
         "jobstreet",
         "hiredly",
     }

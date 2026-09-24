@@ -16,17 +16,15 @@ log = create_logger("Baseline")
 # runs is the entire point of the harness.
 SEARCHES: list[dict] = [
     {
-        "site_name": ["indeed", "linkedin", "google", "jobstreet", "hiredly"],
+        "site_name": ["indeed", "linkedin", "jobstreet", "hiredly"],
         "search_term": "software engineer",
-        "google_search_term": "software engineer jobs in Kuala Lumpur Malaysia",
         "location": "Kuala Lumpur, Malaysia",
         "country_indeed": "malaysia",
         "results_wanted": 50,
     },
     {
-        "site_name": ["indeed", "linkedin", "google", "jobstreet", "hiredly"],
+        "site_name": ["indeed", "linkedin", "jobstreet", "hiredly"],
         "search_term": "data analyst",
-        "google_search_term": "data analyst jobs in Selangor Malaysia",
         "location": "Selangor, Malaysia",
         "country_indeed": "malaysia",
         "results_wanted": 50,
