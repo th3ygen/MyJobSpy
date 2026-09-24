@@ -37,7 +37,7 @@ print(df[['site','title','company','location','date_posted']])
 "
 ```
 
-Note `.github/workflows/publish-to-pypi.yml` publishes to PyPI on push to `main` under the upstream package name `python-jobspy` — it is inherited from upstream and will fail/misfire for this fork; don't rely on it.
+CI (`.github/workflows/tests.yml`) runs the offline suite on Python 3.10 and 3.12 for every push to `main` and every pull request. Nothing publishes to PyPI: the distribution is named `myjobspy` (import name still `jobspy`) and is installed from git.
 
 ## Architecture
 
