@@ -1,7 +1,7 @@
-"""How the two upstream default boards treat a caller's `user_agent`.
+"""Fixes to the two upstream default boards, Indeed and LinkedIn.
 
-scrape_jobs hands one `user_agent` to every board, so each board has to
-decide what a caller's string means for its own endpoint.
+Mostly `user_agent`: scrape_jobs hands one to every board, so each board has
+to decide what a caller's string means for its own endpoint.
 """
 
 from __future__ import annotations
