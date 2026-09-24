@@ -106,7 +106,6 @@ class JobStreet(Scraper):
         self.scraper_input: ScraperInput | None = None
         self.jobs_per_page = JOBS_PER_PAGE
         self.seen_ids: set[str] = set()
-        self.fetch_description = False
 
     def _build_params(self, page: int) -> dict:
         """Builds one search query.
@@ -331,6 +330,6 @@ class JobStreet(Scraper):
 
         start = scraper_input.offset
         selected = jobs[start : start + scraper_input.results_wanted]
-        if self.fetch_description:
+        if scraper_input.jobstreet_fetch_description:
             self._add_descriptions(selected)
         return JobResponse(jobs=selected)
