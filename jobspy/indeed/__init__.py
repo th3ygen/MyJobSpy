@@ -25,6 +25,9 @@ from jobspy.util import (
 
 log = create_logger("Indeed")
 
+# scrape_jobs' default `distance`, used when a caller passes None.
+DEFAULT_RADIUS_MILES = 50
+
 
 class Indeed(Scraper):
     def __init__(
@@ -94,6 +97,13 @@ class Indeed(Scraper):
             ]
         )
 
+    def _radius(self) -> int:
+        """The API needs a radius whenever a location is given: `radius: None`
+        is a 400, and so is leaving it out. None falls back to scrape_jobs'
+        own default."""
+        distance = self.scraper_input.distance
+        return DEFAULT_RADIUS_MILES if distance is None else distance
+
     def _scrape_page(self, cursor: str | None) -> Tuple[list[JobPost], str | None]:
         """
         Scrapes a page of Indeed for jobs with scraper_input criteria
@@ -111,7 +121,7 @@ class Indeed(Scraper):
         query = job_search_query.format(
             what=(f'what: "{search_term}"' if search_term else ""),
             location=(
-                f'location: {{where: "{self.scraper_input.location}", radius: {self.scraper_input.distance}, radiusUnit: MILES}}'
+                f'location: {{where: "{self.scraper_input.location}", radius: {self._radius()}, radiusUnit: MILES}}'
                 if self.scraper_input.location
                 else ""
             ),

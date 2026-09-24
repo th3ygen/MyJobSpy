@@ -82,3 +82,35 @@ class TestIndeed:
             sent["user-agent"] == api_headers["user-agent"]
             for sent in session.headers_sent
         )
+
+
+class QuerySession(RecordingSession):
+    def __init__(self):
+        super().__init__()
+        self.queries = []
+
+    def post(self, url, headers=None, json=None, **kwargs):
+        self.queries.append(json["query"])
+        return super().post(url, headers=headers, **kwargs)
+
+
+def test_indeed_sends_a_radius_when_distance_is_none(monkeypatch):
+    """`radius: None` is invalid GraphQL - Indeed answered 400, and still
+    400 with the radius left out, so it needs one whenever a location is
+    given. None falls back to scrape_jobs' own default of 50."""
+    session = QuerySession()
+    monkeypatch.setattr(indeed_module, "create_session", lambda **kwargs: session)
+    Indeed().scrape(
+        ScraperInput(
+            site_type=[Site.INDEED],
+            search_term="engineer",
+            location="Kuala Lumpur",
+            country=Country.MALAYSIA,
+            distance=None,
+            results_wanted=5,
+        )
+    )
+
+    assert session.queries
+    assert "radius: None" not in session.queries[0]
+    assert "radius: 50" in session.queries[0]
