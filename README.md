@@ -6,7 +6,7 @@
 
 ## Features
 
-- Scrapes **Indeed Malaysia**, **LinkedIn**, **Google Jobs**, and **JobStreet Malaysia** concurrently by default — the five other upstream boards (Glassdoor, ZipRecruiter, Bayt, Naukri, BDJobs) are quarantined out of the default set but still work if named explicitly in `site_name`
+- Scrapes **Indeed Malaysia**, **LinkedIn**, **Google Jobs**, **JobStreet Malaysia** and **Hiredly** concurrently by default — the five other upstream boards (Glassdoor, ZipRecruiter, Bayt, Naukri, BDJobs) are quarantined out of the default set but still work if named explicitly in `site_name`
 - Malaysian locations out of the box — Kuala Lumpur, Selangor, Penang, Johor, Cyberjaya, and more
 - Aggregates everything into one pandas DataFrame → CSV / Excel
 - Proxy support to work around rate limiting
@@ -66,20 +66,21 @@ Use `location="Malaysia"` for a nationwide search, or add `is_remote=True` for r
 | **LinkedIn** | ✅ Default | Searches globally via `location`. Heavily rate limited — proxies recommended. Returns real results, but no salary data and no description text unless `linkedin_fetch_description=True`. |
 | **Google** | ✅ Default | Filtered *only* by `google_search_term`. Needs very specific phrasing (see FAQ) — returned zero rows across every search tried during this project's measurements. |
 | **JobStreet** | ✅ Default | Uses `my.jobstreet.com`'s public JSON search API, plus a GraphQL endpoint for full descriptions when `jobstreet_fetch_description=True`. The only board with structured MY salary — see caveats below. Both endpoints sit behind Cloudflare and can return 403 (its HTML job pages are also robots.txt-disallowed, but the scraper never requests those); the scraper treats a 403 from either as a block and stops rather than retrying, so a JobStreet run can end early with partial results — or with plain search teasers instead of full descriptions — if the board decides to block it. |
+| **Hiredly** | ✅ Default | Uses the GraphQL API `my.hiredly.com`'s own frontend calls; full descriptions arrive with the search, so there is no per-job request. Salary is structured (`salary_source="direct_data"`). Filters by **state only** — a city such as `"Petaling Jaya"` widens to Selangor. About half its listings are aggregated from employer career sites; those carry no salary, and `job_url_direct` links to the employer's own posting. Postings located outside Malaysia (the board also lists Singapore jobs) are dropped. Cloudflare-fronted; a 403 stops the run rather than retrying. |
 | Glassdoor | ⚠️ Quarantined | No Malaysian Glassdoor domain; falls back to `www.glassdoor.com` and returns US-centric results. Not in the default `site_name`; pass `site_name="glassdoor"` to use it anyway. |
 | ZipRecruiter | ❌ Quarantined | US/Canada only. Not in the default `site_name`; pass it explicitly to use it anyway. |
 | Bayt | ❌ Quarantined | Middle East / North Africa. Not in the default `site_name`; pass it explicitly to use it anyway. |
 | Naukri | ❌ Quarantined | India. Not in the default `site_name`; pass it explicitly to use it anyway. |
 | BDJobs | ❌ Quarantined | Bangladesh. Not in the default `site_name`; pass it explicitly to use it anyway. |
 
-The default `site_name` (used whenever the parameter is omitted) is `indeed`, `linkedin`, `google`, `jobstreet` — the four boards worth querying for a Malaysian search. The other five are inherited from upstream and left in the codebase, fully importable and usable, but are quarantined out of the default set: pass them by name (e.g. `site_name="bayt"` or `site_name=["indeed", "bayt"]`) to use them anyway.
+The default `site_name` (used whenever the parameter is omitted) is `indeed`, `linkedin`, `google`, `jobstreet`, `hiredly` — the five boards worth querying for a Malaysian search. The other five are inherited from upstream and left in the codebase, fully importable and usable, but are quarantined out of the default set: pass them by name (e.g. `site_name="bayt"` or `site_name=["indeed", "bayt"]`) to use them anyway.
 
 ## Roadmap — Malaysian job boards
 
 The rest are not implemented yet. They are the intended direction of this fork:
 
 - [x] **JobStreet Malaysia** (`my.jobstreet.com`) — the dominant MY board, highest priority
-- [ ] **Hiredly** (formerly WOBB) — startup / young-professional roles
+- [x] **Hiredly** (formerly WOBB) — startup / young-professional roles
 - [ ] **Maukerja** — Bahasa Malaysia listings, blue-collar & retail heavy
 - [ ] **Ricebowl** — SME and fresh-grad roles
 - [ ] **Glints Malaysia** — tech and startup roles
@@ -89,7 +90,7 @@ Contributions toward any of these are welcome.
 
 ## Malaysia-specific caveats
 
-**Salary parsing.** Indeed Malaysia and LinkedIn return no structured salary data in practice (measured direct-data fill: 0%), so for those boards salary is instead parsed out of the job's *description text* looking for MYR amounts (`RM 5,000 - RM 7,000`, `RM3k-5k`, `RM 25 sejam`, etc.); structured data from the board still wins when a board does provide it. This only works where a description is present: **LinkedIn does not fetch description text by default** (`linkedin_fetch_description=False`), so description-parsed salary is effectively Indeed-only unless you turn that flag on. **JobStreet is the exception** — it publishes a structured `salaryLabel` on most postings, used directly and marked `salary_source="direct_data"` with no description fetch required. The only committed baseline that includes JobStreet (`docs/baseline/2026-09-23-baseline-jobstreet.md`, 584 rows, 156 of them JobStreet's) implies **roughly 50%** direct-data fill for JobStreet specifically — derived by comparing its overall 29.1% salary fill rate against a same-week JobStreet-less run's 21.5% (`docs/baseline/2026-09-23-baseline-phase1-corrected.md`, 424 rows), since neither report broke salary fill out by site at the time. Treat that figure as an approximation, not a precise measurement — a future baseline run will report each board's own salary fill rate directly via the per-site metric in `jobspy/baseline/metrics.py`. `salary_source` on each row tells you whether the figure came from `direct_data` or was `description`-parsed.
+**Salary parsing.** Indeed Malaysia and LinkedIn return no structured salary data in practice (measured direct-data fill: 0%), so for those boards salary is instead parsed out of the job's *description text* looking for MYR amounts (`RM 5,000 - RM 7,000`, `RM3k-5k`, `RM 25 sejam`, etc.); structured data from the board still wins when a board does provide it. This only works where a description is present: **LinkedIn does not fetch description text by default** (`linkedin_fetch_description=False`), so description-parsed salary is effectively Indeed-only unless you turn that flag on. **JobStreet and Hiredly are the exceptions** — both publish structured salary (JobStreet a `salaryLabel`, Hiredly a bare `"5000 - 7000"` read as monthly MYR), used directly and marked `salary_source="direct_data"` with no description fetch required. `docs/baseline/2026-09-24-baseline-hiredly.md` (748 rows) is the first report to break salary fill out per site: **JobStreet 53.9%** (254 rows), **Hiredly 43.5%** (69 rows), Indeed 41.3%, LinkedIn 0.0%. Hiredly's figure is held down by its aggregated listings, which never carry salary; its own organic listings measured 87.5% during reconnaissance. `salary_source` on each row tells you whether the figure came from `direct_data` or was `description`-parsed.
 
 **`enforce_annual_salary=True`** converts monthly MYR figures to annual — useful since most Malaysian postings quote monthly pay.
 
@@ -102,7 +103,7 @@ Contributions toward any of these are welcome.
 ```plaintext
 Optional
 ├── site_name (list|str):
-|    defaults to indeed, linkedin, google, jobstreet when omitted (the
+|    defaults to indeed, linkedin, google, jobstreet, hiredly when omitted (the
 |    MY-relevant boards)
 |    also available, but quarantined out of the default - pass explicitly:
 |    glassdoor, zip_recruiter, bayt, naukri, bdjobs
