@@ -167,3 +167,15 @@ class TestMalformedRecords:
 
     def test_record_without_title_is_skipped(self):
         assert parse_job({"id": "123"}) is None
+
+
+def test_senior_salary_label_above_the_prose_ceiling_is_kept():
+    """A real label from a 2026-09-24 senior-role search. The RM30,000 prose
+    ceiling used to drop it; salaryLabel is a board field, so it gets the
+    board ceiling."""
+    from jobspy.jobstreet.util import parse_compensation
+
+    pay = parse_compensation(
+        {"salaryLabel": "RM\xa040,000 \u2013 RM\xa055,000 per month"}
+    )
+    assert (pay.min_amount, pay.max_amount) == (40_000, 55_000)

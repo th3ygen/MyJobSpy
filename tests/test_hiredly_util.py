@@ -152,6 +152,15 @@ class TestCompensation:
     def test_non_numeric_is_none(self):
         assert parse_compensation(MALFORMED[5]) is None
 
+    def test_senior_pay_above_the_prose_ceiling_is_kept(self):
+        """The salary field is a board field, so the board ceiling applies."""
+        pay = parse_compensation({"salary": "40000 - 55000"})
+        assert (pay.min_amount, pay.max_amount) == (40_000, 55_000)
+
+    def test_a_typo_above_the_board_ceiling_is_still_rejected(self):
+        """Measured on the live board, 2026-09-24."""
+        assert parse_compensation({"salary": "50 - 100000"}) is None
+
     def test_missing_is_none(self):
         assert parse_compensation(MALFORMED[2]) is None
 

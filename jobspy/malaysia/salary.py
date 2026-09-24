@@ -34,6 +34,19 @@ _BANDS: dict[str, tuple[float, float]] = {
     "yearly": (20_000, 500_000),
 }
 
+# Ceilings for a board's own salary field (board_supplied=True). The prose
+# ceiling above exists to tell a wage from a budget figure, and a board's
+# salary field is never a budget - so there it only discarded real pay:
+# JobStreet senior-role searches returned 19 RM-denominated labels between
+# RM30,000 and RM55,000/month (measured 2026-09-24), every one dropped.
+# Still a ceiling, not none: board fields carry advertiser typos ("1700 -
+# 5002500", "50 - 100000" on Hiredly) that nothing else catches. RM80,000
+# leaves headroom over the highest real figure seen; yearly is that x12.
+_BOARD_CEILINGS: dict[str, float] = {
+    "monthly": 80_000,
+    "yearly": 960_000,
+}
+
 # Requires at least one comma group ("+", not "*") so that a plain,
 # non-comma-formatted number such as "3000" is never partially matched by
 # \d{1,3} and truncated to "300" with the trailing digit dropped. Numbers
@@ -77,12 +90,17 @@ def _extract_pair(text: str) -> tuple[float, float] | None:
     return None
 
 
-def parse_myr_salary(text: str | None) -> Compensation | None:
+def parse_myr_salary(
+    text: str | None, *, board_supplied: bool = False
+) -> Compensation | None:
     """Extracts a MYR salary from free text.
 
     Malaysian postings quote monthly pay by default, so an amount with no
     stated interval is treated as monthly. Returns None when nothing
     plausible is found - callers must not guess on its behalf.
+
+    Pass board_supplied=True only for a board's own salary field (never for
+    description text): it raises the ceiling, see _BOARD_CEILINGS.
     """
     if not text:
         return None
@@ -99,6 +117,8 @@ def parse_myr_salary(text: str | None) -> Compensation | None:
     interval = explicit_interval or "monthly"
 
     floor, ceiling = _BANDS[interval]
+    if board_supplied:
+        ceiling = _BOARD_CEILINGS.get(interval, ceiling)
 
     if explicit_interval is not None:
         # The text states its own interval - trust it, and drop the floor

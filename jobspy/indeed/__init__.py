@@ -25,15 +25,32 @@ from jobspy.util import (
 
 log = create_logger("Indeed")
 
+# scrape_jobs' default `distance`, used when a caller passes None.
+DEFAULT_RADIUS_MILES = 50
+
 
 class Indeed(Scraper):
     def __init__(
-        self, proxies: list[str] | str | None = None, ca_cert: str | None = None, user_agent: str | None = None
+        self,
+        proxies: list[str] | str | None = None,
+        ca_cert: str | None = None,
+        user_agent: str | None = None,
     ):
         """
         Initializes IndeedScraper with the Indeed API url
         """
-        super().__init__(Site.INDEED, proxies=proxies)
+        # user_agent is stored but deliberately not sent: the API below is
+        # the iPhone app's and expects the app's UA. A desktop browser UA got
+        # a 403 from it (measured 2026-09-24), and scrape_jobs gives every
+        # board the same user_agent, so honouring it here would let a UA
+        # meant for another board get Indeed blocked.
+        super().__init__(
+            Site.INDEED, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent
+        )
+        if user_agent:
+            log.info(
+                "Indeed keeps its app user-agent; user_agent is not sent to its API"
+            )
 
         self.session = create_session(
             proxies=self.proxies, ca_cert=ca_cert, is_tls=False
@@ -80,6 +97,13 @@ class Indeed(Scraper):
             ]
         )
 
+    def _radius(self) -> int:
+        """The API needs a radius whenever a location is given: `radius: None`
+        is a 400, and so is leaving it out. None falls back to scrape_jobs'
+        own default."""
+        distance = self.scraper_input.distance
+        return DEFAULT_RADIUS_MILES if distance is None else distance
+
     def _scrape_page(self, cursor: str | None) -> Tuple[list[JobPost], str | None]:
         """
         Scrapes a page of Indeed for jobs with scraper_input criteria
@@ -97,7 +121,7 @@ class Indeed(Scraper):
         query = job_search_query.format(
             what=(f'what: "{search_term}"' if search_term else ""),
             location=(
-                f'location: {{where: "{self.scraper_input.location}", radius: {self.scraper_input.distance}, radiusUnit: MILES}}'
+                f'location: {{where: "{self.scraper_input.location}", radius: {self._radius()}, radiusUnit: MILES}}'
                 if self.scraper_input.location
                 else ""
             ),

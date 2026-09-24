@@ -106,7 +106,7 @@ def parse_compensation(record: dict) -> Compensation | None:
     unpriced is correct, because a guess would be indistinguishable from a
     real figure downstream.
     """
-    return parse_myr_salary(record.get("salaryLabel"))
+    return parse_myr_salary(record.get("salaryLabel"), board_supplied=True)
 
 
 def parse_job(record: dict) -> JobPost | None:

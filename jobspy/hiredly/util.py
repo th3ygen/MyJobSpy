@@ -107,7 +107,7 @@ def parse_compensation(record: dict) -> Compensation | None:
     salary = (record.get("salary") or "").strip()
     if not salary or salary.lower() == "undisclosed":
         return None
-    return parse_myr_salary(f"RM {salary} per month")
+    return parse_myr_salary(f"RM {salary} per month", board_supplied=True)
 
 
 def parse_description(

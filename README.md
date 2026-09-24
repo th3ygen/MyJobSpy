@@ -64,7 +64,7 @@ Use `location="Malaysia"` for a nationwide search, or add `is_remote=True` for r
 | **Indeed** | ✅ Default | Uses `malaysia.indeed.com`. Requires `country_indeed="malaysia"`. Rate limited in practice — sustained or large-`results_wanted` runs start returning empty pages, so pace your scrapes and use proxies for anything heavy. Returns real results, but no structured salary data — see caveats below. |
 | **LinkedIn** | ✅ Default | Searches globally via `location`. Heavily rate limited — proxies recommended. Returns real results, but no salary data and no description text unless `linkedin_fetch_description=True`. |
 | **Google** | ⛔ Not default — broken | Google Search now answers non-JavaScript clients with a challenge page containing no results (measured 2026-09-24), so this scraper returns nothing and logs an error saying so. It returned zero rows in every baseline this fork has run. Still importable by name; would need a real browser to work again. |
-| **JobStreet** | ✅ Default | Uses `my.jobstreet.com`'s public JSON search API, plus a GraphQL endpoint for full descriptions when `jobstreet_fetch_description=True`. The only board with structured MY salary — see caveats below. Both endpoints sit behind Cloudflare and can return 403 (its HTML job pages are also robots.txt-disallowed, but the scraper never requests those); the scraper treats a 403 from either as a block and stops rather than retrying, so a JobStreet run can end early with partial results — or with plain search teasers instead of full descriptions — if the board decides to block it. |
+| **JobStreet** | ✅ Default | Uses `my.jobstreet.com`'s public JSON search API, plus a GraphQL endpoint for full descriptions when `jobstreet_fetch_description=True`. Structured MY salary via `salaryLabel` — see caveats below. Both endpoints sit behind Cloudflare and can return 403 (its HTML job pages are also robots.txt-disallowed, but the scraper never requests those); the scraper treats a 403 from either as a block and stops rather than retrying, so a JobStreet run can end early with partial results — or with plain search teasers instead of full descriptions — if the board decides to block it. |
 | **Hiredly** | ✅ Default | Uses the GraphQL API `my.hiredly.com`'s own frontend calls; full descriptions arrive with the search, so there is no per-job request. Salary is structured (`salary_source="direct_data"`). Filters by **state only** — a city such as `"Petaling Jaya"` widens to Selangor. About half its listings are aggregated from employer career sites; those carry no salary, and `job_url_direct` links to the employer's own posting. Postings located outside Malaysia (the board also lists Singapore jobs) are dropped. Cloudflare-fronted; a 403 stops the run rather than retrying. |
 | Glassdoor | ⚠️ Quarantined | No Malaysian Glassdoor domain; falls back to `www.glassdoor.com` and returns US-centric results. Not in the default `site_name`; pass `site_name="glassdoor"` to use it anyway. |
 | ZipRecruiter | ❌ Quarantined | US/Canada only. Not in the default `site_name`; pass it explicitly to use it anyway. |
@@ -88,7 +88,7 @@ The default `site_name` (used whenever the parameter is omitted) is `indeed`, `l
 
 ## Malaysia-specific caveats
 
-**Salary parsing.** Indeed Malaysia and LinkedIn return no structured salary data in practice (measured direct-data fill: 0%), so for those boards salary is instead parsed out of the job's *description text* looking for MYR amounts (`RM 5,000 - RM 7,000`, `RM3k-5k`, `RM 25 sejam`, etc.); structured data from the board still wins when a board does provide it. This only works where a description is present: **LinkedIn does not fetch description text by default** (`linkedin_fetch_description=False`), so description-parsed salary is effectively Indeed-only unless you turn that flag on. **JobStreet and Hiredly are the exceptions** — both publish structured salary (JobStreet a `salaryLabel`, Hiredly a bare `"5000 - 7000"` read as monthly MYR), used directly and marked `salary_source="direct_data"` with no description fetch required. `docs/baseline/2026-09-24-baseline-hiredly.md` (748 rows) is the first report to break salary fill out per site: **JobStreet 53.9%** (254 rows), **Hiredly 43.5%** (69 rows), Indeed 41.3%, LinkedIn 0.0%. Hiredly's figure is held down by its aggregated listings, which never carry salary; its own organic listings measured 87.5% during reconnaissance. `salary_source` on each row tells you whether the figure came from `direct_data` or was `description`-parsed.
+**Salary parsing.** Indeed Malaysia and LinkedIn return no structured salary data in practice (measured direct-data fill: 0%), so for those boards salary is instead parsed out of the job's *description text* looking for MYR amounts (`RM 5,000 - RM 7,000`, `RM3k-5k`, `RM 25 sejam`, etc.); structured data from the board still wins when a board does provide it. This only works where a description is present: **LinkedIn does not fetch description text by default** (`linkedin_fetch_description=False`), so description-parsed salary is effectively Indeed-only unless you turn that flag on. **JobStreet and Hiredly are the exceptions** — both publish structured salary (JobStreet a `salaryLabel`, Hiredly a bare `"5000 - 7000"` read as monthly MYR), used directly and marked `salary_source="direct_data"` with no description fetch required. `docs/baseline/2026-09-24-baseline-hiredly.md` (748 rows) is the first report to break salary fill out per site: **JobStreet 53.9%** (254 rows), **Hiredly 43.5%** (69 rows), Indeed 41.3%, LinkedIn 0.0%. Hiredly's figure is held down by its aggregated listings, which never carry salary; its own organic listings measured 87.5% during reconnaissance. `salary_source` on each row tells you whether the figure came from `direct_data` or was `description`-parsed. Figures parsed from description text above RM30,000/month are discarded as likely budget or revenue numbers rather than pay; a board's own salary field is trusted up to RM80,000/month, since senior roles on JobStreet do list RM30,000–55,000.
 
 **`enforce_annual_salary=True`** converts monthly MYR figures to annual — useful since most Malaysian postings quote monthly pay.
 
@@ -104,12 +104,14 @@ Optional
 |    defaults to indeed, linkedin, jobstreet, hiredly when omitted (the
 |    MY-relevant boards)
 |    also available, but quarantined out of the default - pass explicitly:
-|    glassdoor, zip_recruiter, bayt, naukri, bdjobs
+|    glassdoor, zip_recruiter, bayt, naukri, bdjobs, google (currently
+|    broken - see Supported job boards)
 │
 ├── search_term (str)
 |
 ├── google_search_term (str)
-|     search term for Google Jobs. This is the only param that filters Google results.
+|     search term for Google Jobs, the only param that filters it. Google is
+|     currently broken (it requires JavaScript), so this has no effect.
 │
 ├── location (str): e.g. "Kuala Lumpur, Malaysia"
 │
@@ -120,6 +122,7 @@ Optional
 |    salary parsing) only runs when this is "malaysia".
 │
 ├── distance (int): in miles, default 50
+|    Indeed and LinkedIn only; JobStreet and Hiredly have no radius filter.
 │
 ├── job_type (str): fulltime, parttime, internship, contract
 │
@@ -149,8 +152,10 @@ Optional
 ├── ca_cert (str): path to CA certificate file for proxies
 │
 ├── user_agent (str): override the default user agent
+|    sent by JobStreet, Hiredly, LinkedIn and Glassdoor. Indeed keeps its
+|    mobile-app user agent regardless: its API refused a browser one (403).
 │
-├── description_format (str): markdown (default) or html
+├── description_format (str): markdown (default), html or plain
 │
 ├── enforce_annual_salary (bool): converts monthly/hourly wages to annual
 │
@@ -237,55 +242,43 @@ You've been rate limited. Wait between scrapes, or use the `proxies` param to ro
 ---
 
 **Q: Why so few results per search?**
-All job board endpoints cap out around 1000 jobs per search. Split broad searches by location or job title.
+Most boards cap out around 1000 jobs per search (Hiredly does not). Split broad searches by location or job title, and check `results_wanted` — it is per board, and defaults to 15.
 
-## JobPost schema
+## Output columns
 
 ```plaintext
-JobPost
-├── title
-├── company
-├── company_url
-├── job_url
-├── location
-│   ├── country
-│   ├── city
-│   └── state
+Every board
+├── id                 site-prefixed board id (js-, hd-, in-, li-, ...)
+├── site
+├── title, company
+├── job_url            the posting on the board
+├── job_url_direct     the employer's own posting, where the board links one
+├── location, city, state
+├── date_posted
+├── job_type           fulltime, parttime, internship, contract, ...
 ├── is_remote
 ├── description
-├── job_type: fulltime, parttime, internship, contract
-├── job_function
-│   ├── interval: yearly, monthly, weekly, daily, hourly
-│   ├── min_amount
-│   ├── max_amount
+├── emails             found in the description
+├── compensation
+│   ├── interval       yearly, monthly, weekly, daily, hourly
+│   ├── min_amount, max_amount
 │   ├── currency
-│   └── salary_source: direct_data, description (parsed from posting)
-├── date_posted
-├── emails
-├── dedup_group (Malaysia normalization pipeline)
-└── remote_scope: my, apac, global, other_country, unknown (Malaysia normalization pipeline)
+│   └── salary_source  direct_data (board field) or description (parsed)
+├── dedup_group        Malaysia pipeline
+└── remote_scope       my, apac, global, other_country, unknown (Malaysia pipeline)
 
-LinkedIn specific
-└── job_level
+Filled only by some boards
+├── company_logo       JobStreet, Hiredly, Indeed, LinkedIn
+├── company_url        JobStreet, Indeed, LinkedIn
+├── job_level          Hiredly, LinkedIn
+├── job_function       JobStreet, LinkedIn
+├── skills             Hiredly
+├── experience_range   Hiredly
+├── company_industry   Indeed, LinkedIn
+└── company_addresses, company_num_employees,
+    company_revenue, company_description      Indeed
 
-LinkedIn & Indeed specific
-└── company_industry
-
-Indeed specific
-├── company_country
-├── company_addresses
-├── company_employees_label
-├── company_revenue_label
-├── company_description
-└── company_logo
-
-Naukri specific (quarantined by default — see Supported job boards)
-├── skills
-├── experience_range
-├── company_rating
-├── company_reviews_count
-├── vacancy_count
-└── work_from_home_type
+(Quarantined upstream boards fill a few more, e.g. Naukri's company_rating.)
 ```
 
 ## Credits

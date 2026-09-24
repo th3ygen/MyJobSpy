@@ -133,3 +133,45 @@ def test_annual_band_is_wider_than_monthly():
 
 def test_inverted_range_is_rejected():
     assert parse_myr_salary("RM5,000 - RM3,000") is None
+
+
+# --- Board-supplied salary fields ---------------------------------------------
+#
+# A board's own salary field is always a salary, so the RM30,000/month ceiling
+# - which exists to tell a wage from a budget figure in prose - discards real
+# senior pay there. Measured 2026-09-24: JobStreet senior-role searches
+# returned 19 RM-denominated labels between RM30,000 and RM55,000/month, all
+# dropped. Board fields get a higher ceiling, not none: Hiredly's
+# "1700 - 5002500" and "50 - 100000" are advertiser typos only a ceiling stops.
+
+
+@pytest.mark.parametrize(
+    "label,low,high",
+    [
+        ("RM\xa040,000 \u2013 RM\xa055,000 per month", 40_000, 55_000),
+        ("RM\xa030,000 \u2013 RM\xa045,000 per month", 30_000, 45_000),
+        ("RM 35,000 - 50,000 per month", 35_000, 50_000),
+    ],
+)
+def test_board_fields_keep_real_senior_monthly_pay(label, low, high):
+    pay = parse_myr_salary(label, board_supplied=True)
+    assert (pay.min_amount, pay.max_amount) == (low, high)
+
+
+def test_the_same_figure_in_prose_is_still_rejected():
+    """The prose ceiling is unchanged - a description can pair a budget
+    figure with an interval word."""
+    assert parse_myr_salary("RM 40,000 - RM 55,000 per month") is None
+
+
+@pytest.mark.parametrize(
+    "label",
+    ["RM 1700 - 5002500 per month", "RM 50 - 100000 per month"],
+)
+def test_board_fields_still_reject_typos_above_the_board_ceiling(label):
+    assert parse_myr_salary(label, board_supplied=True) is None
+
+
+def test_board_yearly_ceiling_is_the_monthly_one_times_twelve():
+    assert parse_myr_salary("RM 660,000 per year", board_supplied=True) is not None
+    assert parse_myr_salary("RM 1,200,000 per year", board_supplied=True) is None
