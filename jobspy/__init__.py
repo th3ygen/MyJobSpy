@@ -9,6 +9,7 @@ from jobspy.bayt import BaytScraper
 from jobspy.bdjobs import BDJobs
 from jobspy.glassdoor import Glassdoor
 from jobspy.google import Google
+from jobspy.hiredly import Hiredly
 from jobspy.indeed import Indeed
 from jobspy.jobstreet import JobStreet
 from jobspy.linkedin import LinkedIn
@@ -34,6 +35,7 @@ DEFAULT_SITES: list[Site] = [
     Site.LINKEDIN,
     Site.GOOGLE,
     Site.JOBSTREET,
+    Site.HIREDLY,
 ]
 
 # The board registry. Adding a scraper means adding a Site member, a package
@@ -50,6 +52,7 @@ SCRAPER_MAPPING: dict[Site, type[Scraper]] = {
     Site.NAUKRI: Naukri,
     Site.BDJOBS: BDJobs,
     Site.JOBSTREET: JobStreet,
+    Site.HIREDLY: Hiredly,
 }
 
 

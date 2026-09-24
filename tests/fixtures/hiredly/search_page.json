@@ -1,0 +1,452 @@
+{
+ "data": {
+  "jobListsSearchResults": {
+   "totalCount": 386,
+   "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "MTA"
+   },
+   "nodes": [
+    {
+     "id": "a37fed3c-75e4-47f7-9a3b-c21c5044f7bf",
+     "title": "Product Manager - Surgical Equipments",
+     "slug": "jobs-malaysia-syno-medical-sdn-bhd-job-product-manager-surgical-equipments",
+     "salary": "5000 - 7000",
+     "stateRegion": "Selangor",
+     "location": "D2-01-01, Pusat Perdagangan Dana 1, Jalan 1A/46, Petaling Jaya",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-22T15:26:11+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>Join a high-performing and collaborative sales team at Syno Medical, where you’ll play a pivotal role in advancing minimally invasive surgical solutions that make a real difference in patient outcomes. Our diverse portfolio supports a wide range of specialties, including General, Colorectal, Gynecologic, Obstetrics, Urology, Upper GI, and Cardio, which allows you to work at the forefront of surgical innovation within operating rooms and hospital environments.</p><p>As a Sales Leader, you will inspire and guide a team of driven professionals, equipping them with the strategic selling skills and clinical expertise needed to engage confidently with surgeons, specialists, and key decision-makers. You won’t just manage performance—you’ll elevate it, fostering a culture of accountability, growth, and excellence.</p><p>Entry-level hires may start from RM 3,000 per month.</p>",
+     "requirements": "<ul>\n<li>Bachelor’s degree in Biomedical Science, Life Sciences, Business, or a related field</li>\n<li>Minimum 4–7 years of sales experience in medical devices and reusable surgical equipment</li>\n<li>Proven track record of achieving or exceeding sales targets, preferably in a leadership role</li>\n<li>Strong leadership and team management skills with the ability to motivate and develop others</li>\n<li>Solid clinical knowledge or the ability to quickly learn and confidently communicate in surgical environments</li>\n<li>Excellent interpersonal, communication, and presentation skills</li>\n<li>Demonstrated ability to build trust and influence key stakeholders, including surgeons and hospital decision-makers</li>\n<li>Strong business acumen with strategic thinking and problem-solving capabilities</li>\n<li>Ability to work in a fast-paced, dynamic environment and adapt to changing priorities</li>\n<li>Willingness to travel frequently to hospitals and healthcare facilities within the assigned territory</li>\n</ul>",
+     "careerLevel": "Manager / Team Lead",
+     "minYearsExperience": 4,
+     "maxYearsExperience": 7,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Leadership"
+      },
+      {
+       "name": "Sales Strategy"
+      },
+      {
+       "name": "Marketing Analytics"
+      },
+      {
+       "name": "Data Collection"
+      }
+     ],
+     "company": {
+      "name": "Syno Medical Sdn Bhd",
+      "logo": "//s3.ap-southeast-1.amazonaws.com/resources.wobbjobs.com/uploads/company-logo/company_logo_image/59c16546-58fb-40fc-8bc6-b62c5a416675/syno-medical-sdn-bhd-1676434197.jpg"
+     }
+    },
+    {
+     "id": "8f5ec12d-adfd-4e87-9d00-badbf5484bef",
+     "title": "Internship Human Resources Officer/Human Resources Manager",
+     "slug": "jobs-malaysia-na-master-event-job-internship-human-resources-officer-human-resources-manager",
+     "salary": "400",
+     "stateRegion": "Selangor",
+     "location": "No 14 & 12, Jalan Niaga Bestari 3, Puncak Alam",
+     "jobType": "Internship",
+     "activeAt": "2026-09-24T15:48:36+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>We are looking for a motivated and organised HR Intern to join NA Master Resources and support HR activities across our different business units, including printing, retail and café operations.</p><p><strong>Responsibilities:</strong><br> • Assist with recruitment and internship applications<br> • Screen resumes and organise candidate information<br> • Assist in arranging interviews and communicating with candidates<br> • Maintain employee records and HR documentation<br> • Assist with attendance, leave and staff records<br> • Prepare HR documents and reports<br> • Assist with onboarding and staff administration<br> • Support other HR-related tasks when required</p>",
+     "requirements": "<p><strong>Requirements:</strong><br> • Diploma/Degree in Human Resource Management, Business Administration or related field<br> • Good communication and interpersonal skills<br> • Organised, responsible and willing to learn<br> • Basic knowledge of Microsoft Office / Google Workspace<br> • Able to handle confidential information professionally</p>",
+     "careerLevel": "Internship",
+     "minYearsExperience": -1,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Human Resource Management"
+      },
+      {
+       "name": "Administrative Functions"
+      }
+     ],
+     "company": {
+      "name": "NA Master Event",
+      "logo": null
+     }
+    },
+    {
+     "id": "a13f6d67-e5b8-44c3-86b9-926c1451773f",
+     "title": "HR Executive ",
+     "slug": "jobs-malaysia-sindiyan-plantation-sdn-bhd-job-hr-executive",
+     "salary": "Undisclosed",
+     "stateRegion": "Selangor",
+     "location": "Sungai Long, Cheras",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-15T11:30:00+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>&nbsp;<strong>JOB BRIEF</strong></p><p>Responsible for managing foreign worker and expatriate administration while supporting day-to-day HR operations. The role involves handling employee documentation, work permits, immigration matters, and coordination with government agencies and external parties.</p>",
+     "requirements": "<p>&nbsp;<strong>REQUIREMENTS</strong></p>",
+     "careerLevel": "Junior Executive",
+     "minYearsExperience": 1,
+     "maxYearsExperience": 3,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "HR Operations"
+      },
+      {
+       "name": "HR Regulations"
+      },
+      {
+       "name": "Human Resource Management"
+      }
+     ],
+     "company": {
+      "name": "SINDIYAN PLANTATION SDN BHD",
+      "logo": "//resources.wobbjobs.com/jobs-malaysia/companies/99bbefc1-ab81-4b0e-821d-42277dfc4e11/company_logo/original/84d17cd4-048a-496c-963b-8d5ed89fe042-sindiyan%20logo%20revised%20%28enhanced0.jpg"
+     }
+    },
+    {
+     "id": "8c138a21-ce0d-4fdf-a802-427bbfbb9f1a",
+     "title": "Sales Consultant- KL Setia Mall",
+     "slug": "jobs-malaysia-swarovski-global-business-job-sales-consultant-kl-setia-mall",
+     "salary": "Undisclosed",
+     "stateRegion": "Kuala Lumpur",
+     "location": "Shah Alam, Setia Mall, MYS",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-24T02:45:31+08:00",
+     "category": "scraped",
+     "externalJobUrl": "https://swarovski.wd3.myworkdayjobs.com/en-US/swarovski/job/Shah-Alam-Setia-Mall-MYS/Sales-Consultant--KL-Setia-Mall_R-115872?locationCountry=972dc4ba8d454bc0b893ff84b1529077",
+     "aggregatedCompanyName": "",
+     "description": "<p><p>At Swarovski, your ideas are valued, and your work helps create unforgettable moments for our customers every day.</p><p>Ready to bring brilliance to life with one of the most iconic brands in fashion and design? Join our retail team and be part of a culture where service meets style, and every interaction reflects the pop luxury and elegance of Swarovski.</p>",
+     "requirements": "<p></p>",
+     "careerLevel": null,
+     "minYearsExperience": 0,
+     "maxYearsExperience": 10,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [],
+     "company": {
+      "name": "Swarovski Global Business",
+      "logo": "//resources.wobbjobs.com/jobs-malaysia/companies/4f9bbf56-fa33-480b-9041-580433080260/company_logo/original/ed481b4e-8d50-4305-8cd7-b1c2c20ec87a-image_2025-01-17_182928587.png"
+     }
+    },
+    {
+     "id": "3279048b-d016-41a9-a260-eb3b211b4ebf",
+     "title": "Telesales Executive (WFH - Korean Speaker)",
+     "slug": "jobs-malaysia-aetherion-dataworks-sdn-bhd-job-telesales-executive-wfh-korean-speaker",
+     "salary": "4000 - 8000",
+     "stateRegion": "Remote",
+     "location": "Petaling Jaya",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-24T16:56:02+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<ul>\n<li>Conduct outbound calls and use social platforms to welcome newly registered customers and close sales using effective closing techniques.</li>\n<li>Develop and execute strategies to identify and engage potential customers through calls and social media to boost sales.</li>\n<li>Stay informed about industry trends and competition to adjust strategies and achieve monthly targets.</li>\n<li>Seek and record customer feedback to optimize future acquisition strategies.</li>\n<li>Handle and acknowledge rejections, providing alternative approaches in difficult situations.</li>\n</ul>",
+     "requirements": "<p>&nbsp;</p>",
+     "careerLevel": "Junior Executive",
+     "minYearsExperience": 0,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Korean Language"
+      },
+      {
+       "name": "English Language"
+      },
+      {
+       "name": "Sales"
+      },
+      {
+       "name": "Customer Service"
+      }
+     ],
+     "company": {
+      "name": "Aetherion Dataworks Sdn Bhd",
+      "logo": "//resources.wobbjobs.com/jobs-malaysia/companies/b1b0a7a7-4780-4d94-a66d-e92e48bbb072/company_logo/original/e4c8b26c-0ca8-465d-bfae-b1ebb5f2cdd8-AE-Profile-Photo.jpg"
+     }
+    },
+    {
+     "id": "ae1b3068-0265-4aa8-a132-dfe3fc58a4ec",
+     "title": "Internship Production Coordinator Intern",
+     "slug": "jobs-malaysia-gogoprint-malaysia-job-internship-production-coordinator-intern",
+     "salary": "700 - 1100",
+     "stateRegion": "Selangor",
+     "location": "Phileo Damansara 1 Unit F206, Block F, No.9, Jalan 16/11, Off Jalan Damansara, 46350 Petaling Jaya, Selangor",
+     "jobType": "Internship",
+     "activeAt": "2026-09-24T18:54:15+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>Gogoprint is a regional online printing company serving businesses across Malaysia, Singapore and Thailand, handling end-to-end print orders through a network of print partners and an in-house team. As a Production Coordinator Intern, you will run the daily flow of print jobs from order to finished product over a roughly four-month onsite internship, coordinating job dispatch, monitoring production schedules and supporting complaint resolution while reporting to the Operations Team Lead.</p>",
+     "requirements": "<p><strong>What you'll learn:</strong></p>",
+     "careerLevel": "Internship",
+     "minYearsExperience": -1,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Production Coordination"
+      },
+      {
+       "name": "Job Dispatch"
+      },
+      {
+       "name": "Imposition Layout"
+      },
+      {
+       "name": "Production Planning"
+      }
+     ],
+     "company": {
+      "name": "Gogoprint Malaysia",
+      "logo": "//s3.ap-southeast-1.amazonaws.com/resources.wobbjobs.com/uploads/company-logo/company_logo_image/509b0c86-5c14-495c-b496-bce747901b5d/gogoprint-malaysia-1560741491.png"
+     }
+    },
+    {
+     "id": "c2cc7a2a-817f-45b4-b99e-81eda389924c",
+     "title": "Barista",
+     "slug": "jobs-malaysia-abedeen-job-barista",
+     "salary": "1700 - 5002500",
+     "stateRegion": "Selangor",
+     "location": "LG-07, Menara Shaftsbury Putrajaya,  Jalan Alamanda, Presint 1,, putrajaya",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-24T15:12:28+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>WE’RE HIRING :CAFÉ ALL-ROUNDER!</p><p>📍 Buz Out Coffee, Shaftsbury Putrajaya</p>",
+     "requirements": "<p></p>",
+     "careerLevel": "Junior Executive",
+     "minYearsExperience": -1,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": true,
+      "workingArrangementRemote": false,
+      "workingArrangementOnSite": true,
+      "workingArrangementHybrid": false,
+      "rightToWorkOpenToSponsor": false,
+      "rightToWorkLocalCitizen": false,
+      "rightToWorkPermanentCitizen": false,
+      "rightToWorkWorkVisaOrEmploymentPass": false,
+      "rightToWorkNoPreference": true
+     },
+     "skills": [
+      {
+       "name": "Organizational Skills"
+      },
+      {
+       "name": "Self Organization"
+      }
+     ],
+     "company": {
+      "name": "ABEDEEN",
+      "logo": null
+     }
+    },
+    {
+     "id": "8fd5baae-3fb2-45ae-bd2f-ab48ad19a89b",
+     "title": "Regional Business Development Executive (Singapore)",
+     "slug": "jobs-malaysia-troopers-job-regional-business-development-executive-singapore",
+     "salary": "4000 - 9000",
+     "stateRegion": "Selangor",
+     "location": "Plaza Hamodal, 15, Jalan 13/2, Seksyen 13, 46200 Petaling Jaya, Selangor",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-24T13:29:34+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p><strong>Role Overview :</strong></p><p>This role drives the company’s market entry and growth in targeted markets through strategic research, planning, and partnership development. Working cross-functionally, it ensures effective localization of products and go-to-market strategies while building strong relationships with partners, industry bodies, and government agencies to accelerate sustainable growth.&nbsp;</p>",
+     "requirements": "<p><strong>Qualifications:</strong>&nbsp;</p>",
+     "careerLevel": "Senior Executive",
+     "minYearsExperience": 1,
+     "maxYearsExperience": 3,
+     "globalHirePreferences": {
+      "enabled": true,
+      "workingArrangementRemote": true,
+      "workingArrangementOnSite": false,
+      "workingArrangementHybrid": true,
+      "rightToWorkOpenToSponsor": false,
+      "rightToWorkLocalCitizen": true,
+      "rightToWorkPermanentCitizen": true,
+      "rightToWorkWorkVisaOrEmploymentPass": true,
+      "rightToWorkNoPreference": false
+     },
+     "skills": [
+      {
+       "name": "Sales"
+      },
+      {
+       "name": "Business Development"
+      },
+      {
+       "name": "Market Research"
+      }
+     ],
+     "company": {
+      "name": "TROOPERS",
+      "logo": "//resources.wobbjobs.com/companies/c5f5039d-580d-48b9-b36b-22b33ad36c46/company_images/original/ead26cb2-6aa8-448b-84bb-d7578f2dbcf4-Logo-4.png"
+     }
+    },
+    {
+     "id": "7abd77e0-ed5d-4796-9eb7-464a9693073b",
+     "title": "Channel Sales Executive",
+     "slug": "jobs-malaysia-canon-marketing-malaysia-sdn-bhd-job-channel-sales-executive",
+     "salary": "3000 - 3500",
+     "stateRegion": "Penang",
+     "location": "No: 46, Anson Road",
+     "jobType": "Full-Time",
+     "activeAt": "2026-09-24T15:07:17+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>Key Responsibilities:</p><ul>\n<li>Develop and onboard new channel partners to expand market reach</li>\n<li>Manage and strengthen relationships with existing distributors and dealers</li>\n<li>Achieve and exceed sales targets through effective partner collaboration</li>\n<li>Provide sales support and technical assistance to partners</li>\n<li>Work closely with internal teams to shape channel strategy</li>\n<li>Monitor partner performance and represent the company at trade shows and industry events</li>\n</ul>",
+     "requirements": "<p>Requirements:</p>",
+     "careerLevel": "Junior Executive",
+     "minYearsExperience": 1,
+     "maxYearsExperience": 3,
+     "globalHirePreferences": {
+      "enabled": false,
+      "workingArrangementRemote": null,
+      "workingArrangementOnSite": null,
+      "workingArrangementHybrid": null,
+      "rightToWorkOpenToSponsor": null,
+      "rightToWorkLocalCitizen": null,
+      "rightToWorkPermanentCitizen": null,
+      "rightToWorkWorkVisaOrEmploymentPass": null,
+      "rightToWorkNoPreference": null
+     },
+     "skills": [
+      {
+       "name": "Channel Sales"
+      },
+      {
+       "name": "Business Development"
+      },
+      {
+       "name": "Partner Relationship Management"
+      },
+      {
+       "name": "Negotiation"
+      }
+     ],
+     "company": {
+      "name": "Canon Marketing (Malaysia) Sdn Bhd",
+      "logo": "//s3.ap-southeast-1.amazonaws.com/resources.wobbjobs.com/uploads/company-logo/company_logo_image/dc41e95e-f231-4274-8338-df476f5bca60/canon-marketing-malaysia-sdn-b-1630901803.png"
+     }
+    },
+    {
+     "id": "46843029-4cf3-46ea-8400-e6000365fdb5",
+     "title": "Internship Technical Internship Opportunity | Singapore",
+     "slug": "jobs-malaysia-cadvision-systems-sdn-bhd-job-internship-technical-internship-opportunity-singapore",
+     "salary": "800 - 1000",
+     "stateRegion": "North-East",
+     "location": "Kaki Bukit Road 3",
+     "jobType": "Internship",
+     "activeAt": "2026-08-28T09:18:02+08:00",
+     "category": "organic",
+     "externalJobUrl": "",
+     "aggregatedCompanyName": "",
+     "description": "<p>CADVision Systems, your trusted SOLIDWORKS and SolidCAM authorized partner in Malaysia and Singapore, dedicated to enhancing design capabilities and providing exceptional software support.</p><p>To empower local engineers and companies to meet engineering challenges through advanced technology and expertise.<br>Our mission is to equip and support local engineers and companies in overcoming engineering challenges through the utilization of advanced technology and expert knowledge. We strive to empower them to achieve excellence and success in their endeavors.</p>",
+     "requirements": "<p>Who we are looking for?</p>",
+     "careerLevel": "Internship",
+     "minYearsExperience": -1,
+     "maxYearsExperience": 0,
+     "globalHirePreferences": {
+      "enabled": true,
+      "workingArrangementRemote": false,
+      "workingArrangementOnSite": true,
+      "workingArrangementHybrid": false,
+      "rightToWorkOpenToSponsor": false,
+      "rightToWorkLocalCitizen": true,
+      "rightToWorkPermanentCitizen": false,
+      "rightToWorkWorkVisaOrEmploymentPass": false,
+      "rightToWorkNoPreference": false
+     },
+     "skills": [
+      {
+       "name": "Communication"
+      },
+      {
+       "name": "Verbal Communication Skills"
+      },
+      {
+       "name": "Proactivity"
+      },
+      {
+       "name": "Mechanical Engineering"
+      }
+     ],
+     "company": {
+      "name": "CADVision Systems Sdn Bhd",
+      "logo": "//resources.wobbjobs.com/companies/c27e6cb1-2e63-41b1-a420-ab8321b32b68/company_logo/original/9f1e1803-57f1-4fbc-9bc7-98817892500b-CVS_Logo_Authorized%20Reseller.png"
+     }
+    }
+   ]
+  }
+ }
+}

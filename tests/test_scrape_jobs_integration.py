@@ -428,6 +428,7 @@ def test_default_sites_are_malaysia_relevant():
         "linkedin",
         "google",
         "jobstreet",
+        "hiredly",
     }
 
 

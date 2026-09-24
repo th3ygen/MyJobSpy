@@ -316,6 +316,7 @@ class Site(Enum):
     NAUKRI = "naukri"
     BDJOBS = "bdjobs"
     JOBSTREET = "jobstreet"
+    HIREDLY = "hiredly"
 
     @property
     def display_name(self) -> str:
@@ -343,6 +344,7 @@ SITE_DISPLAY_NAMES: dict[Site, str] = {
     Site.NAUKRI: "Naukri",
     Site.BDJOBS: "BDJobs",
     Site.JOBSTREET: "JobStreet",
+    Site.HIREDLY: "Hiredly",
 }
 
 
